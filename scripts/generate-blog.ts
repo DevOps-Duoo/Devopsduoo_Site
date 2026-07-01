@@ -8,7 +8,7 @@
  *   npx tsx scripts/generate-blog.ts
  * 
  * Environment Variables:
- *   GEMINI_API_KEY - Your Google Gemini API key (free from https://aistudio.google.com/apikey)
+ *   GROQ_API_KEY - Your Groq API key (free from https://console.groq.com)
  */
 
 import fs from 'fs';
@@ -137,72 +137,45 @@ DO include:
 }
 
 // ============================================
-// GOOGLE GEMINI API INTEGRATION (FREE TIER)
+// GROQ API INTEGRATION (FREE TIER - 30 req/min)
+// https://console.groq.com - No credit card required
 // ============================================
-const GEMINI_MODELS = [
-  'gemini-1.5-flash',
-  'gemini-2.0-flash-lite',
-  'gemini-2.0-flash',
-];
-
-async function callGeminiAPI(topic: BlogTopic, retries = 3): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+async function callGroqAPI(topic: BlogTopic): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
   
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is not set. Get a free key at https://aistudio.google.com/apikey');
+    throw new Error('GROQ_API_KEY environment variable is not set. Get a free key at https://console.groq.com');
   }
 
-  const prompt = `${SYSTEM_PROMPT}\n\n${generateUserPrompt(topic)}`;
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: generateUserPrompt(topic) }
+      ],
+      max_tokens: 8000,
+      temperature: 0.7,
+    })
+  });
 
-  for (const model of GEMINI_MODELS) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      console.log(`   Trying model: ${model} (attempt ${attempt}/${retries})...`);
-      
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 8192,
-            }
-          })
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          console.log(`   ✅ Success with model: ${model}`);
-          return data.candidates[0].content.parts[0].text;
-        }
-      }
-
-      const status = response.status;
-      if (status === 429) {
-        console.log(`   ⏳ Rate limited on ${model}, waiting 20s...`);
-        await new Promise(resolve => setTimeout(resolve, 20000));
-      } else if (status === 404 || status === 403) {
-        console.log(`   ⚠️ Model ${model} not available, trying next...`);
-        break; // Try next model
-      } else {
-        const error = await response.json().catch(() => ({}));
-        console.log(`   ⚠️ Error (${status}): ${JSON.stringify(error).substring(0, 100)}`);
-        if (attempt < retries) {
-          await new Promise(resolve => setTimeout(resolve, 5000));
-        }
-      }
-    }
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(`Groq API error (${response.status}): ${JSON.stringify(error)}`);
   }
 
-  throw new Error('All Gemini models failed. Check your API key quota at https://ai.dev/rate-limit');
+  const data = await response.json();
+  
+  if (!data.choices?.[0]?.message?.content) {
+    throw new Error('Groq API returned empty response');
+  }
+
+  return data.choices[0].message.content;
 }
 
 // ============================================
@@ -295,9 +268,9 @@ async function generateBlogPost(topic: BlogTopic): Promise<void> {
   console.log(`   Intent: ${topic.intent}\n`);
 
   try {
-    // Generate content via Gemini
-    console.log('🤖 Calling Gemini API...');
-    const rawContent = await callGeminiAPI(topic);
+    // Generate content via Groq (free tier)
+    console.log('🤖 Calling Groq API (Llama 3.3 70B)...');
+    const rawContent = await callGroqAPI(topic);
     console.log('✅ Content generated successfully');
 
     // Process and structure the blog
@@ -389,12 +362,12 @@ Options:
   --all             Generate all topics (use with caution)
 
 Environment:
-  GEMINI_API_KEY    Required. Free key from https://aistudio.google.com/apikey
+  GROQ_API_KEY     Required. Free key from https://console.groq.com
 
 Examples:
   npx ts-node scripts/generate-blog.ts --list
   npx ts-node scripts/generate-blog.ts --topic 0
-  GEMINI_API_KEY=xxx npx tsx scripts/generate-blog.ts --next
+  GROQ_API_KEY=xxx npx tsx scripts/generate-blog.ts --next
 `);
     process.exit(0);
   }

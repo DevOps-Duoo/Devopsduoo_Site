@@ -46,7 +46,7 @@ jobs:
       - name: Generate blog post
         id: generate
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           if [ -n "${{ github.event.inputs.topic_index }}" ]; then
             npx tsx scripts/generate-blog.ts --topic ${{ github.event.inputs.topic_index }}
