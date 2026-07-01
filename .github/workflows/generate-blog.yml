@@ -1,9 +1,9 @@
 name: Generate Blog Post
 
 on:
-  # Run every Monday, Wednesday, Friday at 6:00 AM IST (00:30 UTC)
+  # Run every day at 6:00 AM IST (00:30 UTC)
   schedule:
-    - cron: '30 0 * * 1,3,5'
+    - cron: '30 0 * * *'
   
   # Allow manual trigger
   workflow_dispatch:

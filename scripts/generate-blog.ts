@@ -76,7 +76,287 @@ const TOPICS_QUEUE: BlogTopic[] = [
     category: "cloud",
     intent: "comparison",
     targetLength: 2200
-  }
+  },
+  {
+    topic: "Docker Build Cache Optimization - Reduce Build Times by 80%",
+    primaryKeyword: "docker build cache optimization",
+    secondaryKeywords: ["dockerfile optimization", "docker layer caching", "multi-stage builds", "buildkit cache"],
+    category: "cicd",
+    intent: "tutorial",
+    targetLength: 1600
+  },
+  {
+    topic: "Prometheus Memory Usage Too High - Optimization Guide",
+    primaryKeyword: "prometheus memory usage optimization",
+    secondaryKeywords: ["prometheus cardinality", "metric retention", "prometheus federation", "thanos"],
+    category: "monitoring",
+    intent: "troubleshooting",
+    targetLength: 1800
+  },
+  {
+    topic: "Kubernetes RBAC Best Practices for Multi-Tenant Clusters",
+    primaryKeyword: "kubernetes rbac best practices",
+    secondaryKeywords: ["kubernetes multi-tenancy", "namespace isolation", "service account security", "cluster roles"],
+    category: "security",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "Jenkins to GitHub Actions Migration - Complete Guide",
+    primaryKeyword: "jenkins to github actions migration",
+    secondaryKeywords: ["github actions tutorial", "cicd migration", "jenkins replacement", "workflow conversion"],
+    category: "cicd",
+    intent: "tutorial",
+    targetLength: 2200
+  },
+  {
+    topic: "Helm Chart Development Best Practices",
+    primaryKeyword: "helm chart best practices",
+    secondaryKeywords: ["helm templates", "helm values", "chart testing", "helm dependencies"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Top 25 Kubernetes Interview Questions for Senior DevOps Engineers",
+    primaryKeyword: "kubernetes interview questions",
+    secondaryKeywords: ["devops interview", "k8s troubleshooting questions", "kubernetes scenarios", "senior devops interview"],
+    category: "interview",
+    intent: "interview",
+    targetLength: 2500
+  },
+  {
+    topic: "ArgoCD vs Flux - GitOps Tool Comparison for 2026",
+    primaryKeyword: "argocd vs flux",
+    secondaryKeywords: ["gitops tools", "kubernetes deployment", "argocd tutorial", "flux cd"],
+    category: "cicd",
+    intent: "comparison",
+    targetLength: 2000
+  },
+  {
+    topic: "Kubernetes Ingress Controller Comparison - Nginx vs Traefik vs HAProxy",
+    primaryKeyword: "kubernetes ingress controller comparison",
+    secondaryKeywords: ["nginx ingress", "traefik kubernetes", "haproxy ingress", "ingress best practices"],
+    category: "kubernetes",
+    intent: "comparison",
+    targetLength: 2000
+  },
+  {
+    topic: "GitHub Actions Self-Hosted Runners - Setup and Security Guide",
+    primaryKeyword: "github actions self hosted runners",
+    secondaryKeywords: ["self hosted runner setup", "runner security", "autoscaling runners", "github actions optimization"],
+    category: "cicd",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Kubernetes Network Policies - Complete Security Guide",
+    primaryKeyword: "kubernetes network policies",
+    secondaryKeywords: ["pod network security", "calico network policy", "cilium network policy", "zero trust kubernetes"],
+    category: "security",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "Grafana Dashboard Best Practices for DevOps Teams",
+    primaryKeyword: "grafana dashboard best practices",
+    secondaryKeywords: ["grafana monitoring", "dashboard design", "prometheus grafana", "alerting dashboards"],
+    category: "monitoring",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "AWS Lambda Cold Start Optimization Techniques",
+    primaryKeyword: "aws lambda cold start optimization",
+    secondaryKeywords: ["serverless performance", "lambda provisioned concurrency", "cold start reduction", "lambda best practices"],
+    category: "cloud",
+    intent: "tutorial",
+    targetLength: 1600
+  },
+  {
+    topic: "Kubernetes HPA vs VPA - Autoscaling Deep Dive",
+    primaryKeyword: "kubernetes hpa vs vpa autoscaling",
+    secondaryKeywords: ["horizontal pod autoscaler", "vertical pod autoscaler", "kubernetes scaling", "custom metrics autoscaling"],
+    category: "kubernetes",
+    intent: "comparison",
+    targetLength: 2000
+  },
+  {
+    topic: "Ansible vs Terraform - When to Use Each for Infrastructure",
+    primaryKeyword: "ansible vs terraform",
+    secondaryKeywords: ["infrastructure as code", "configuration management", "ansible playbooks", "terraform modules"],
+    category: "automation",
+    intent: "comparison",
+    targetLength: 2000
+  },
+  {
+    topic: "Container Security Scanning - Tools and Best Practices",
+    primaryKeyword: "container security scanning",
+    secondaryKeywords: ["trivy container scanning", "docker security", "vulnerability scanning", "image signing"],
+    category: "security",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Kubernetes Troubleshooting - CrashLoopBackOff Complete Fix Guide",
+    primaryKeyword: "kubernetes crashloopbackoff fix",
+    secondaryKeywords: ["pod crash debugging", "container restart", "kubernetes logs", "oomkilled troubleshooting"],
+    category: "kubernetes",
+    intent: "troubleshooting",
+    targetLength: 1800
+  },
+  {
+    topic: "Terraform Modules - Building Reusable Infrastructure Components",
+    primaryKeyword: "terraform modules best practices",
+    secondaryKeywords: ["terraform module structure", "module registry", "reusable infrastructure", "terraform composition"],
+    category: "automation",
+    intent: "tutorial",
+    targetLength: 2000
+  },
+  {
+    topic: "Kubernetes Secrets Management with HashiCorp Vault",
+    primaryKeyword: "kubernetes secrets vault",
+    secondaryKeywords: ["hashicorp vault kubernetes", "secret injection", "vault agent", "external secrets operator"],
+    category: "security",
+    intent: "tutorial",
+    targetLength: 2000
+  },
+  {
+    topic: "CI/CD Pipeline Security - Shift Left Best Practices",
+    primaryKeyword: "cicd pipeline security",
+    secondaryKeywords: ["shift left security", "devsecops", "pipeline vulnerability scanning", "supply chain security"],
+    category: "security",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Kubernetes Resource Limits and Requests - Complete Guide",
+    primaryKeyword: "kubernetes resource limits requests",
+    secondaryKeywords: ["cpu memory limits", "resource quota", "limit range", "quality of service"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Azure DevOps vs GitHub Actions - Which CI/CD to Choose",
+    primaryKeyword: "azure devops vs github actions",
+    secondaryKeywords: ["azure pipelines", "cicd comparison", "azure devops migration", "github actions enterprise"],
+    category: "cicd",
+    intent: "comparison",
+    targetLength: 2000
+  },
+  {
+    topic: "Kubernetes Service Mesh - Istio vs Linkerd Comparison",
+    primaryKeyword: "istio vs linkerd service mesh",
+    secondaryKeywords: ["service mesh kubernetes", "istio setup", "linkerd tutorial", "microservices networking"],
+    category: "kubernetes",
+    intent: "comparison",
+    targetLength: 2200
+  },
+  {
+    topic: "AWS S3 Bucket Security Best Practices",
+    primaryKeyword: "aws s3 security best practices",
+    secondaryKeywords: ["s3 bucket policy", "s3 encryption", "s3 access control", "s3 compliance"],
+    category: "cloud",
+    intent: "guide",
+    targetLength: 1600
+  },
+  {
+    topic: "Linux Performance Troubleshooting for DevOps Engineers",
+    primaryKeyword: "linux performance troubleshooting",
+    secondaryKeywords: ["linux monitoring commands", "cpu troubleshooting", "memory leak linux", "disk io performance"],
+    category: "automation",
+    intent: "troubleshooting",
+    targetLength: 2000
+  },
+  {
+    topic: "Kubernetes Disaster Recovery - Backup and Restore Strategies",
+    primaryKeyword: "kubernetes disaster recovery backup",
+    secondaryKeywords: ["velero backup", "etcd backup restore", "cluster recovery", "kubernetes dr strategy"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "Top 30 DevOps Interview Questions and Answers for 2026",
+    primaryKeyword: "devops interview questions 2026",
+    secondaryKeywords: ["devops interview preparation", "senior devops questions", "cicd interview", "infrastructure interview"],
+    category: "interview",
+    intent: "interview",
+    targetLength: 2500
+  },
+  {
+    topic: "Nginx Configuration Best Practices for Production",
+    primaryKeyword: "nginx configuration best practices",
+    secondaryKeywords: ["nginx reverse proxy", "nginx performance tuning", "nginx security", "nginx load balancing"],
+    category: "automation",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Kubernetes Pod Scheduling - Affinity and Anti-Affinity Explained",
+    primaryKeyword: "kubernetes pod affinity anti-affinity",
+    secondaryKeywords: ["node affinity", "pod topology", "taints tolerations", "kubernetes scheduling"],
+    category: "kubernetes",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Monitoring Kubernetes with Datadog - Complete Setup Guide",
+    primaryKeyword: "kubernetes datadog monitoring",
+    secondaryKeywords: ["datadog kubernetes", "datadog agent", "apm kubernetes", "datadog dashboards"],
+    category: "monitoring",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Git Branching Strategies for DevOps Teams",
+    primaryKeyword: "git branching strategy devops",
+    secondaryKeywords: ["gitflow", "trunk based development", "feature branching", "release management"],
+    category: "cicd",
+    intent: "guide",
+    targetLength: 1600
+  },
+  {
+    topic: "AWS CloudFormation vs Terraform - Infrastructure as Code Comparison",
+    primaryKeyword: "cloudformation vs terraform",
+    secondaryKeywords: ["infrastructure as code comparison", "aws iac", "terraform aws", "cloudformation templates"],
+    category: "cloud",
+    intent: "comparison",
+    targetLength: 2000
+  },
+  {
+    topic: "Kubernetes Persistent Volumes - Storage Best Practices",
+    primaryKeyword: "kubernetes persistent volumes best practices",
+    secondaryKeywords: ["pv pvc kubernetes", "storage class", "dynamic provisioning", "stateful applications"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "ELK Stack Setup for Kubernetes Log Management",
+    primaryKeyword: "elk stack kubernetes logging",
+    secondaryKeywords: ["elasticsearch kubernetes", "fluentd logging", "kibana dashboards", "centralized logging"],
+    category: "monitoring",
+    intent: "tutorial",
+    targetLength: 2000
+  },
+  {
+    topic: "Kubernetes Multi-Cluster Management Best Practices",
+    primaryKeyword: "kubernetes multi cluster management",
+    secondaryKeywords: ["multi cluster kubernetes", "cluster federation", "kubefed", "multi cluster networking"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "SonarQube Integration in CI/CD Pipeline - Quality Gate Setup",
+    primaryKeyword: "sonarqube cicd integration",
+    secondaryKeywords: ["code quality gate", "sonarqube github actions", "static code analysis", "sonarqube docker"],
+    category: "cicd",
+    intent: "tutorial",
+    targetLength: 1800
+  },
 ];
 
 // ============================================
@@ -320,16 +600,28 @@ async function generateBlogPost(topic: BlogTopic): Promise<void> {
 // ============================================
 // TOPIC SELECTION
 // ============================================
-function getNextTopic(): BlogTopic {
-  // Get today's day of year for rotation
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const diff = now.getTime() - start.getTime();
-  const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-  
-  // Rotate through topics
-  const index = dayOfYear % TOPICS_QUEUE.length;
-  return TOPICS_QUEUE[index];
+function getExistingBlogSlugs(): string[] {
+  const blogDir = path.join(process.cwd(), 'content', 'blog');
+  if (!fs.existsSync(blogDir)) return [];
+  return fs.readdirSync(blogDir)
+    .filter(f => f.endsWith('.md') && f !== '.gitkeep')
+    .map(f => f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.md$/, ''));
+}
+
+function getNextTopic(): BlogTopic | null {
+  const existingSlugs = getExistingBlogSlugs();
+  console.log(`📂 Found ${existingSlugs.length} existing blog posts`);
+
+  // Find the first topic that hasn't been generated yet
+  for (const topic of TOPICS_QUEUE) {
+    const slug = generateSlug(topic.topic);
+    if (!existingSlugs.some(s => s.includes(slug) || slug.includes(s))) {
+      return topic;
+    }
+  }
+
+  console.log('⚠️  All topics have been generated. Add more topics to the queue.');
+  return null;
 }
 
 function getTopicByIndex(index: number): BlogTopic {
@@ -398,7 +690,12 @@ Examples:
     console.log('\n✅ All topics generated!\n');
     process.exit(0);
   } else {
-    topic = getNextTopic();
+    const nextTopic = getNextTopic();
+    if (!nextTopic) {
+      console.log('\n✅ No new topics to generate. All topics have been published.');
+      process.exit(0);
+    }
+    topic = nextTopic;
   }
 
   await generateBlogPost(topic);
