@@ -230,7 +230,7 @@ tags:
 ${blog.keywords.map(k => `  - "${k}"`).join('\n')}
 readTime: ${blog.readTime}
 featured: false
-draft: true
+draft: false
 seo:
   title: "${blog.title} | DevOps Duoo"
   description: "${blog.description}"
