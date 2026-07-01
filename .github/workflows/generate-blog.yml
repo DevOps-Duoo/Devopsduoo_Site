@@ -41,9 +41,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm install -g ts-node typescript @types/node
+        run: npm ci
 
       - name: Generate blog post
         id: generate
@@ -51,9 +49,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           if [ -n "${{ github.event.inputs.topic_index }}" ]; then
-            npx ts-node scripts/generate-blog.ts --topic ${{ github.event.inputs.topic_index }}
+            npx tsx scripts/generate-blog.ts --topic ${{ github.event.inputs.topic_index }}
           else
-            npx ts-node scripts/generate-blog.ts --next
+            npx tsx scripts/generate-blog.ts --next
           fi
           
           # Get the generated file name
