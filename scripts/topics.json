@@ -1,0 +1,119 @@
+{
+  "topics": [
+    {
+      "topic": "Kubernetes CPU Alert Not Firing - Complete Troubleshooting Guide",
+      "primaryKeyword": "kubernetes cpu alert not firing",
+      "secondaryKeywords": ["prometheus alerting", "kubernetes monitoring", "cpu throttling", "alertmanager troubleshooting"],
+      "category": "kubernetes",
+      "intent": "troubleshooting",
+      "targetLength": 1800,
+      "status": "pending"
+    },
+    {
+      "topic": "GitLab CI/CD Pipeline Optimization for Large Monorepos",
+      "primaryKeyword": "gitlab ci cd pipeline optimization",
+      "secondaryKeywords": ["monorepo ci cd", "gitlab runner optimization", "pipeline caching", "parallel jobs"],
+      "category": "cicd",
+      "intent": "tutorial",
+      "targetLength": 2000,
+      "status": "pending"
+    },
+    {
+      "topic": "Terraform State Management Best Practices for Production",
+      "primaryKeyword": "terraform state management best practices",
+      "secondaryKeywords": ["terraform remote state", "state locking", "terraform workspaces", "state migration"],
+      "category": "automation",
+      "intent": "guide",
+      "targetLength": 1800,
+      "status": "pending"
+    },
+    {
+      "topic": "Kubernetes Pod Stuck in Terminating State - How to Fix",
+      "primaryKeyword": "kubernetes pod stuck terminating",
+      "secondaryKeywords": ["kubectl delete force", "finalizers removal", "pod eviction", "graceful shutdown"],
+      "category": "kubernetes",
+      "intent": "troubleshooting",
+      "targetLength": 1500,
+      "status": "pending"
+    },
+    {
+      "topic": "AWS EKS vs Self-Managed Kubernetes - Production Comparison",
+      "primaryKeyword": "eks vs self managed kubernetes",
+      "secondaryKeywords": ["kubernetes production", "eks cost comparison", "managed kubernetes", "kubernetes operations"],
+      "category": "cloud",
+      "intent": "comparison",
+      "targetLength": 2200,
+      "status": "pending"
+    },
+    {
+      "topic": "Docker Build Cache Optimization - Reduce Build Times by 80%",
+      "primaryKeyword": "docker build cache optimization",
+      "secondaryKeywords": ["dockerfile optimization", "docker layer caching", "multi-stage builds", "buildkit cache"],
+      "category": "cicd",
+      "intent": "tutorial",
+      "targetLength": 1600,
+      "status": "pending"
+    },
+    {
+      "topic": "Prometheus Memory Usage Too High - Optimization Guide",
+      "primaryKeyword": "prometheus memory usage optimization",
+      "secondaryKeywords": ["prometheus cardinality", "metric retention", "prometheus federation", "thanos"],
+      "category": "monitoring",
+      "intent": "troubleshooting",
+      "targetLength": 1800,
+      "status": "pending"
+    },
+    {
+      "topic": "Kubernetes RBAC Best Practices for Multi-Tenant Clusters",
+      "primaryKeyword": "kubernetes rbac best practices",
+      "secondaryKeywords": ["kubernetes multi-tenancy", "namespace isolation", "service account security", "cluster roles"],
+      "category": "security",
+      "intent": "guide",
+      "targetLength": 2000,
+      "status": "pending"
+    },
+    {
+      "topic": "Jenkins to GitHub Actions Migration - Complete Guide",
+      "primaryKeyword": "jenkins to github actions migration",
+      "secondaryKeywords": ["github actions tutorial", "cicd migration", "jenkins replacement", "workflow conversion"],
+      "category": "cicd",
+      "intent": "tutorial",
+      "targetLength": 2200,
+      "status": "pending"
+    },
+    {
+      "topic": "Helm Chart Development Best Practices",
+      "primaryKeyword": "helm chart best practices",
+      "secondaryKeywords": ["helm templates", "helm values", "chart testing", "helm dependencies"],
+      "category": "kubernetes",
+      "intent": "guide",
+      "targetLength": 1800,
+      "status": "pending"
+    },
+    {
+      "topic": "Top 25 Kubernetes Interview Questions for Senior DevOps Engineers",
+      "primaryKeyword": "kubernetes interview questions",
+      "secondaryKeywords": ["devops interview", "k8s troubleshooting questions", "kubernetes scenarios", "senior devops interview"],
+      "category": "interview",
+      "intent": "interview",
+      "targetLength": 2500,
+      "status": "pending"
+    },
+    {
+      "topic": "ArgoCD vs Flux - GitOps Tool Comparison for 2026",
+      "primaryKeyword": "argocd vs flux",
+      "secondaryKeywords": ["gitops tools", "kubernetes deployment", "argocd tutorial", "flux cd"],
+      "category": "cicd",
+      "intent": "comparison",
+      "targetLength": 2000,
+      "status": "pending"
+    }
+  ],
+  "config": {
+    "publishFrequency": "every-2-days",
+    "autoPublish": false,
+    "requireReview": true,
+    "defaultAuthor": "DevOps Duoo",
+    "categories": ["kubernetes", "cicd", "cloud", "monitoring", "security", "automation", "interview"]
+  }
+}
