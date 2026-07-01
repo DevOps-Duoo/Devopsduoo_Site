@@ -1,14 +1,14 @@
 /**
  * DevOps Duoo - AI Blog Generator
  * 
- * This script uses OpenAI GPT API to generate SEO-optimized blog posts
+ * This script uses Google Gemini API (free tier) to generate SEO-optimized blog posts
  * for the DevOps Duoo website.
  * 
  * Usage:
- *   npx ts-node scripts/generate-blog.ts
+ *   npx tsx scripts/generate-blog.ts
  * 
  * Environment Variables:
- *   OPENAI_API_KEY - Your OpenAI API key
+ *   GEMINI_API_KEY - Your Google Gemini API key (free from https://aistudio.google.com/apikey)
  */
 
 import fs from 'fs';
@@ -137,41 +137,48 @@ DO include:
 }
 
 // ============================================
-// OPENAI API INTEGRATION
+// GOOGLE GEMINI API INTEGRATION (FREE TIER)
 // ============================================
-async function callGPTAPI(topic: BlogTopic): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
+async function callGeminiAPI(topic: BlogTopic): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY environment variable is not set');
+    throw new Error('GEMINI_API_KEY environment variable is not set. Get a free key at https://aistudio.google.com/apikey');
   }
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4-turbo-preview', // Use gpt-4 for better quality
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: generateUserPrompt(topic) }
-      ],
-      max_tokens: 4000,
-      temperature: 0.7,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.1
-    })
-  });
+  const prompt = `${SYSTEM_PROMPT}\n\n${generateUserPrompt(topic)}`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 8192,
+        }
+      })
+    }
+  );
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(`OpenAI API error: ${JSON.stringify(error)}`);
+    throw new Error(`Gemini API error: ${JSON.stringify(error)}`);
   }
 
   const data = await response.json();
-  return data.choices[0].message.content;
+  
+  if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+    throw new Error('Gemini API returned empty response');
+  }
+
+  return data.candidates[0].content.parts[0].text;
 }
 
 // ============================================
@@ -264,9 +271,9 @@ async function generateBlogPost(topic: BlogTopic): Promise<void> {
   console.log(`   Intent: ${topic.intent}\n`);
 
   try {
-    // Generate content via GPT
-    console.log('🤖 Calling GPT API...');
-    const rawContent = await callGPTAPI(topic);
+    // Generate content via Gemini
+    console.log('🤖 Calling Gemini API...');
+    const rawContent = await callGeminiAPI(topic);
     console.log('✅ Content generated successfully');
 
     // Process and structure the blog
@@ -358,12 +365,12 @@ Options:
   --all             Generate all topics (use with caution)
 
 Environment:
-  OPENAI_API_KEY    Required. Your OpenAI API key.
+  GEMINI_API_KEY    Required. Free key from https://aistudio.google.com/apikey
 
 Examples:
   npx ts-node scripts/generate-blog.ts --list
   npx ts-node scripts/generate-blog.ts --topic 0
-  OPENAI_API_KEY=sk-xxx npx ts-node scripts/generate-blog.ts --next
+  GEMINI_API_KEY=xxx npx tsx scripts/generate-blog.ts --next
 `);
     process.exit(0);
   }

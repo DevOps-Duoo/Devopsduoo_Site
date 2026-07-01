@@ -46,7 +46,7 @@ jobs:
       - name: Generate blog post
         id: generate
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -n "${{ github.event.inputs.topic_index }}" ]; then
             npx tsx scripts/generate-blog.ts --topic ${{ github.event.inputs.topic_index }}
