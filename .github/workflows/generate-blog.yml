@@ -41,19 +41,17 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm install -g ts-node typescript @types/node
+        run: npm ci
 
       - name: Generate blog post
         id: generate
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           if [ -n "${{ github.event.inputs.topic_index }}" ]; then
-            npx ts-node scripts/generate-blog.ts --topic ${{ github.event.inputs.topic_index }}
+            npx tsx scripts/generate-blog.ts --topic ${{ github.event.inputs.topic_index }}
           else
-            npx ts-node scripts/generate-blog.ts --next
+            npx tsx scripts/generate-blog.ts --next
           fi
           
           # Get the generated file name
@@ -71,7 +69,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.generate.outputs.generated == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "📝 Add blog: ${{ steps.generate.outputs.blog_title }}"
@@ -79,7 +77,7 @@ jobs:
           body: |
             ## 🤖 AI-Generated Blog Post
             
-            This blog post was automatically generated using GPT-4.
+            This blog post was automatically generated using Groq (Llama 3.3 70B).
             
             **File:** `${{ steps.generate.outputs.blog_file }}`
             

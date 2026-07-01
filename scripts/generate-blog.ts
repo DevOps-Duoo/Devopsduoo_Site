@@ -1,14 +1,14 @@
 /**
  * DevOps Duoo - AI Blog Generator
  * 
- * This script uses OpenAI GPT API to generate SEO-optimized blog posts
+ * This script uses Google Gemini API (free tier) to generate SEO-optimized blog posts
  * for the DevOps Duoo website.
  * 
  * Usage:
- *   npx ts-node scripts/generate-blog.ts
+ *   npx tsx scripts/generate-blog.ts
  * 
  * Environment Variables:
- *   OPENAI_API_KEY - Your OpenAI API key
+ *   GROQ_API_KEY - Your Groq API key (free from https://console.groq.com)
  */
 
 import fs from 'fs';
@@ -137,40 +137,44 @@ DO include:
 }
 
 // ============================================
-// OPENAI API INTEGRATION
+// GROQ API INTEGRATION (FREE TIER - 30 req/min)
+// https://console.groq.com - No credit card required
 // ============================================
-async function callGPTAPI(topic: BlogTopic): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
+async function callGroqAPI(topic: BlogTopic): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
   
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY environment variable is not set');
+    throw new Error('GROQ_API_KEY environment variable is not set. Get a free key at https://console.groq.com');
   }
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-4-turbo-preview', // Use gpt-4 for better quality
+      model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: generateUserPrompt(topic) }
       ],
-      max_tokens: 4000,
+      max_tokens: 8000,
       temperature: 0.7,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.1
     })
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`OpenAI API error: ${JSON.stringify(error)}`);
+    const error = await response.json().catch(() => ({}));
+    throw new Error(`Groq API error (${response.status}): ${JSON.stringify(error)}`);
   }
 
   const data = await response.json();
+  
+  if (!data.choices?.[0]?.message?.content) {
+    throw new Error('Groq API returned empty response');
+  }
+
   return data.choices[0].message.content;
 }
 
@@ -264,9 +268,9 @@ async function generateBlogPost(topic: BlogTopic): Promise<void> {
   console.log(`   Intent: ${topic.intent}\n`);
 
   try {
-    // Generate content via GPT
-    console.log('🤖 Calling GPT API...');
-    const rawContent = await callGPTAPI(topic);
+    // Generate content via Groq (free tier)
+    console.log('🤖 Calling Groq API (Llama 3.3 70B)...');
+    const rawContent = await callGroqAPI(topic);
     console.log('✅ Content generated successfully');
 
     // Process and structure the blog
@@ -358,12 +362,12 @@ Options:
   --all             Generate all topics (use with caution)
 
 Environment:
-  OPENAI_API_KEY    Required. Your OpenAI API key.
+  GROQ_API_KEY     Required. Free key from https://console.groq.com
 
 Examples:
   npx ts-node scripts/generate-blog.ts --list
   npx ts-node scripts/generate-blog.ts --topic 0
-  OPENAI_API_KEY=sk-xxx npx ts-node scripts/generate-blog.ts --next
+  GROQ_API_KEY=xxx npx tsx scripts/generate-blog.ts --next
 `);
     process.exit(0);
   }
