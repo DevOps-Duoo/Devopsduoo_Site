@@ -36,10 +36,10 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
   const categoryColor = categoryColors[post.category] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
   
   return (
-    <article className="group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
-      <Link href={`/blog/${post.slug}`} className="block p-6">
+    <article className="group h-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+      <Link href={`/blog/${post.slug}`} className="flex h-full flex-col p-5 sm:p-6">
         {/* Category & Read Time */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between gap-3 mb-3">
           <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${categoryColor}`}>
             {post.category}
           </span>
@@ -49,12 +49,12 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
         </div>
         
         {/* Title */}
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
           {post.title}
         </h2>
         
         {/* Description */}
-        <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 leading-relaxed">
           {post.description}
         </p>
         
@@ -71,7 +71,7 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
         </div>
         
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             {new Date(post.date).toLocaleDateString('en-US', {
               year: 'numeric',
@@ -90,10 +90,10 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
 
 function CategoryFilter({ categories, activeCategory }: { categories: string[]; activeCategory?: string }) {
   return (
-    <div className="flex flex-wrap gap-2 mb-8">
+    <div className="flex flex-wrap gap-2 mb-8 sm:mb-10 pb-2">
       <Link
         href="/blog"
-        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
           !activeCategory
             ? 'bg-blue-600 text-white'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -105,7 +105,7 @@ function CategoryFilter({ categories, activeCategory }: { categories: string[]; 
         <Link
           key={category}
           href={`/blog?category=${category}`}
-          className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
+          className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors whitespace-nowrap ${
             activeCategory === category
               ? 'bg-blue-600 text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -134,25 +134,25 @@ export default async function BlogPage({
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white py-20">
+      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white py-16 sm:py-20 lg:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
             DevOps Blog
           </h1>
-          <p className="text-xl text-blue-100 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
             Practical tutorials, troubleshooting guides, and best practices from real production experience.
           </p>
         </div>
       </section>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
         {/* Category Filter */}
         <CategoryFilter categories={categories} activeCategory={searchParams.category} />
 
         {/* Posts Grid */}
         {filteredPosts.length > 0 ? (
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 xl:grid-cols-3">
             {filteredPosts.map((post) => (
               <BlogCard key={post.slug} post={post} />
             ))}
@@ -180,14 +180,14 @@ export default async function BlogPage({
         )}
 
         {/* Newsletter CTA */}
-        <section className="mt-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 md:p-12 text-center text-white">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+        <section className="mt-12 sm:mt-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 sm:p-8 md:p-10 lg:p-12 text-center text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">
             Stay Updated with DevOps Insights
           </h2>
           <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
             Get the latest tutorials, troubleshooting guides, and best practices delivered to your inbox.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto">
             <input
               type="email"
               placeholder="Enter your email"

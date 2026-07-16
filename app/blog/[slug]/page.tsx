@@ -54,11 +54,16 @@ export async function generateMetadata({
 // Simple markdown to HTML converter
 function markdownToHtml(markdown: string): string {
   let html = markdown;
+  const codeBlocks: string[] = [];
   
   // Code blocks with language
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
-    const language = lang || 'text';
-    return `<pre class="language-${language}"><code class="language-${language}">${escapeHtml(code.trim())}</code></pre>`;
+  html = html.replace(/```([A-Za-z0-9_-]+)?\s*\n([\s\S]*?)```/g, (_match, lang, code) => {
+    const language = (lang || 'text').toLowerCase();
+    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+    codeBlocks.push(
+      `<pre class="language-${language} my-6 overflow-x-auto rounded-xl bg-gray-900 p-4 text-sm leading-6 text-gray-100"><code class="language-${language} whitespace-pre-wrap">${escapeHtml(code.trim())}</code></pre>`
+    );
+    return placeholder;
   });
   
   // Inline code
@@ -101,6 +106,11 @@ function markdownToHtml(markdown: string): string {
   html = html.replace(/(<\/ul>)<\/p>/g, '$1');
   html = html.replace(/<p>(<blockquote>)/g, '$1');
   html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
+  html = html.replace(/<p>\s*__CODE_BLOCK_(\d+)__\s*<\/p>/g, '__CODE_BLOCK_$1__');
+
+  codeBlocks.forEach((block, index) => {
+    html = html.replace(`__CODE_BLOCK_${index}__`, block);
+  });
   
   return html;
 }
@@ -182,10 +192,10 @@ export default async function BlogPostPage({
         )}
 
         {/* Hero Section */}
-        <header className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-16 md:py-24">
+        <header className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-14 sm:py-20 lg:py-24">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+            <nav className="flex flex-wrap items-center gap-2 text-sm text-gray-400 mb-6">
               <Link href="/" className="hover:text-white transition-colors">
                 Home
               </Link>
@@ -216,12 +226,12 @@ export default async function BlogPostPage({
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6 break-words">
               {post.title}
             </h1>
 
             {/* Description */}
-            <p className="text-xl text-gray-300 mb-8">
+            <p className="text-lg sm:text-xl text-gray-300 mb-8 leading-relaxed">
               {post.description}
             </p>
 
@@ -253,15 +263,15 @@ export default async function BlogPostPage({
         </header>
 
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 md:p-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 sm:p-6 md:p-8 lg:p-10">
             {/* Article Content */}
             <div
-              className="prose prose-lg dark:prose-invert max-w-none
+              className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none w-full overflow-x-hidden
                 prose-headings:scroll-mt-20
-                prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-4
-                prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-8 prose-h3:mb-3
-                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed
+                prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 sm:prose-h2:mt-10 prose-h2:mb-4
+                prose-h3:text-lg sm:prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-6 sm:prose-h3:mt-8 prose-h3:mb-3
+                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-p:break-words
                 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
                 prose-code:bg-gray-100 dark:prose-code:bg-gray-700 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
                 prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:overflow-x-auto
@@ -273,7 +283,7 @@ export default async function BlogPostPage({
 
             {/* Share & Actions */}
             <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
                     Share this article
@@ -316,7 +326,7 @@ export default async function BlogPostPage({
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                 Related Articles
               </h2>
-              <div className="grid gap-6 md:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {relatedPosts.map((relatedPost) => (
                   <Link
                     key={relatedPost.slug}
