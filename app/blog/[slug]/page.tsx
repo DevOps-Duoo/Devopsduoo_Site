@@ -263,21 +263,26 @@ export default async function BlogPostPage({
         </header>
 
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 sm:p-6 md:p-8 lg:p-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-16">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 sm:p-8 md:p-10 lg:p-12">
             {/* Article Content */}
             <div
-              className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none w-full overflow-x-hidden
-                prose-headings:scroll-mt-20
-                prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 sm:prose-h2:mt-10 prose-h2:mb-4
-                prose-h3:text-lg sm:prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-6 sm:prose-h3:mt-8 prose-h3:mb-3
-                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-p:break-words
-                prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
-                prose-code:bg-gray-100 dark:prose-code:bg-gray-700 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:overflow-x-auto
-                prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic
-                prose-ul:list-disc prose-ul:pl-6
-                prose-li:text-gray-700 dark:prose-li:text-gray-300"
+              className="prose prose-base sm:prose-lg dark:prose-invert max-w-none w-full overflow-x-hidden
+                prose-headings:scroll-mt-20 prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white
+                prose-h1:text-2xl sm:prose-h1:text-3xl prose-h1:mt-10 prose-h1:mb-5 prose-h1:leading-tight
+                prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:mt-10 sm:prose-h2:mt-12 prose-h2:mb-5 prose-h2:border-b prose-h2:border-gray-200 dark:prose-h2:border-gray-700 prose-h2:pb-3
+                prose-h3:text-lg sm:prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-8 sm:prose-h3:mt-10 prose-h3:mb-4
+                prose-h4:text-base sm:prose-h4:text-lg prose-h4:font-semibold prose-h4:mt-6 prose-h4:mb-3
+                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-8 prose-p:break-words prose-p:mb-6
+                prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
+                prose-strong:text-gray-900 dark:prose-strong:text-white
+                prose-code:bg-gray-100 dark:prose-code:bg-gray-700 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:text-blue-700 dark:prose-code:text-blue-300
+                prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:overflow-x-auto prose-pre:my-8 prose-pre:shadow-lg
+                prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400 prose-blockquote:my-8 prose-blockquote:bg-blue-50 dark:prose-blockquote:bg-blue-900/10 prose-blockquote:py-1 prose-blockquote:rounded-r-lg
+                prose-ul:list-disc prose-ul:pl-6 prose-ul:my-5 prose-ul:space-y-2
+                prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-5 prose-ol:space-y-2
+                prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-li:leading-7
+                prose-hr:border-gray-200 dark:prose-hr:border-gray-700 prose-hr:my-10"
               dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
 

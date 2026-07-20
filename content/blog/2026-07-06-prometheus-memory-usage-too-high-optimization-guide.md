@@ -1,6 +1,6 @@
 ---
 title: "Prometheus Memory Usage Too High - Optimization Guide"
-description: "Prometheus is a popular monitoring system used in production environments, but high memory usage can lead to performance issues and even crashes. In thi..."
+description: "High Prometheus memory usage can lead to performance issues and crashes in production. This guide covers the root causes, including high-cardinality metrics and long retention periods, and provides actionable steps to reduce memory consumption."
 date: "2026-07-06"
 lastModified: "2026-07-06"
 author: "DevOps Duoo"
@@ -16,130 +16,129 @@ featured: false
 draft: false
 seo:
   title: "Prometheus Memory Usage Too High - Optimization Guide | DevOps Duoo"
-  description: "Prometheus is a popular monitoring system used in production environments, but high memory usage can lead to performance issues and even crashes. In thi..."
+  description: "Learn how to diagnose and fix high Prometheus memory usage. Covers cardinality reduction, metric retention policies, Thanos integration, and federation."
   keywords: "prometheus memory usage optimization, prometheus cardinality, metric retention, prometheus federation, thanos"
   canonical: "/blog/prometheus-memory-usage-too-high-optimization-guide"
 ---
 
-# Prometheus Memory Usage Too High - Optimization Guide
 ## TL;DR
-* Identify and optimize high-cardinality metrics to reduce memory usage in Prometheus
-* Implement metric retention policies and use Thanos for long-term storage
-* Monitor Prometheus memory usage and adjust configurations as needed to prevent performance issues
+
+- Identify and eliminate high-cardinality metrics to reduce Prometheus memory usage.
+- Implement metric retention policies and use Thanos for long-term storage to keep Prometheus lean.
+- Monitor Prometheus memory usage proactively to prevent performance issues and crashes.
 
 ## The Problem
-Prometheus is a popular monitoring system used in production environments, but high memory usage can lead to performance issues and even crashes. In this guide, we'll cover the common causes of high memory usage in Prometheus and provide step-by-step instructions on how to optimize it.
+
+Prometheus is a popular monitoring system used in production environments, but high memory usage can lead to performance degradation and even out-of-memory crashes. Understanding why Prometheus uses so much memory — and knowing what to do about it — is a critical skill for any DevOps engineer.
 
 ## Understanding Prometheus Memory Usage
-Prometheus memory usage is primarily driven by the number of time series it stores. A time series is a sequence of data points measured at regular intervals, and each time series requires a certain amount of memory to store. The main factors that contribute to high memory usage in Prometheus are:
 
-* High-cardinality metrics: Metrics with a large number of unique label combinations can lead to a high number of time series, increasing memory usage.
-* Long metric retention periods: Storing metrics for extended periods can lead to a large amount of data being stored in memory.
-* Inefficient scraping configurations: Scraping too frequently or scraping unnecessary metrics can lead to increased memory usage.
+Prometheus memory usage is primarily driven by the number of time series it stores in memory. A time series is a uniquely identified sequence of data points, and each one requires memory to store. The main contributing factors are:
+
+- **High-cardinality metrics**: Metrics with a large number of unique label combinations (e.g., per-request or per-user labels) generate an enormous number of time series.
+- **Long retention periods**: Storing metrics for extended periods means more data in memory and more data on disk.
+- **Inefficient scraping**: Scraping targets too frequently, or scraping metrics you do not actually use, increases both memory and storage consumption.
 
 ## Optimizing High-Cardinality Metrics
-High-cardinality metrics can be optimized by reducing the number of unique label combinations. One way to do this is by using the `label_replace` function to remove unnecessary labels.
 
-```promql
-# Remove the 'instance' label from the 'http_requests_total' metric
-label_replace(http_requests_total, "instance", "", ".*")
+High-cardinality metrics are the most common cause of excessive Prometheus memory usage. The fix is to reduce the number of unique label combinations.
+
+You can drop or rewrite labels using `metric_relabel_configs` in your Prometheus configuration:
+
+```yaml
+scrape_configs:
+  - job_name: 'my-app'
+    static_configs:
+      - targets: ['localhost:8080']
+    metric_relabel_configs:
+      # Drop a high-cardinality label we do not need
+      - source_labels: [request_id]
+        action: labeldrop
+      # Drop entire metrics we are not using
+      - source_labels: [__name__]
+        regex: 'go_gc_.*'
+        action: drop
 ```
 
-This can be done in the Prometheus configuration file using the `metric_relabel_configs` section.
-
-```yml
-# prometheus.yml
-metric_relabel_configs:
-  - source_labels: [instance]
-    regex: '.*'
-    target_label: instance
-    replacement: ''
-    action: replace
-```
+Use the Prometheus UI (`/tsdb-status`) to identify your top cardinality contributors before making changes.
 
 ## Implementing Metric Retention Policies
-Implementing metric retention policies can help reduce memory usage by limiting the amount of data stored. Prometheus provides a `retention` configuration option that can be used to set the retention period for metrics.
 
-```yml
-# prometheus.yml
-retention:
-  30d
+Reducing how long Prometheus retains data is one of the simplest ways to lower memory and disk usage. You can set the retention period using the `--storage.tsdb.retention.time` flag when starting Prometheus:
+
+```yaml
+args:
+  - '--storage.tsdb.retention.time=15d'
+  - '--storage.tsdb.retention.size=10GB'
 ```
 
-This will store metrics for 30 days. It's also possible to use Thanos for long-term storage, which can help reduce memory usage in Prometheus.
+For most teams, 15 days of local retention is sufficient when combined with a long-term storage solution like Thanos or Grafana Mimir.
 
 ## Using Thanos for Long-Term Storage
-Thanos is a highly scalable, object storage-based metric system that can be used to store metrics long-term. It provides a `store` component that can be used to store metrics, and a `query` component that can be used to query metrics.
+
+Thanos is a highly available, long-term storage system for Prometheus metrics. It extends Prometheus by adding durable object storage (e.g., AWS S3, GCS), global query views, and compaction — without requiring you to keep all your data in Prometheus memory.
+
+Start by deploying the Thanos sidecar alongside your Prometheus instance:
 
 ```bash
-# Start the Thanos store component
-thanos store --data-dir=/path/to/data --objstore.config-file=/path/to/config.yaml
+thanos sidecar   --prometheus.url=http://localhost:9090   --objstore.config-file=/etc/thanos/objstore.yaml   --tsdb.path=/prometheus
 ```
 
-The `objstore.config-file` option specifies the configuration file for the object store. The configuration file should contain the following:
+Then configure your object store (e.g., S3):
 
-```yml
-# config.yaml
+```yaml
 type: S3
 config:
-  bucket: my-bucket
+  bucket: my-prometheus-metrics
   endpoint: s3.amazonaws.com
-  access_key: my-access-key
-  secret_key: my-secret-key
+  region: us-east-1
+  access_key: YOUR_ACCESS_KEY
+  secret_key: YOUR_SECRET_KEY
 ```
 
-## Configuring Prometheus to Use Thanos
-To configure Prometheus to use Thanos, you need to add the `thanos` section to the Prometheus configuration file.
-
-```yml
-# prometheus.yml
-thanos:
-  store:
-    url: http://thanos-store:10901
-```
-
-This will configure Prometheus to send metrics to the Thanos store component.
+With Thanos in place, you can reduce Prometheus local retention to just a few hours while retaining years of queryable history in object storage.
 
 ## Configuring Prometheus Federation
-Prometheus federation allows multiple Prometheus servers to be configured to scrape metrics from each other. This can help reduce memory usage by distributing the metrics across multiple servers.
 
-```yml
-# prometheus.yml
-federation:
-  - name: my-federation
-    url: http://prometheus1:9090
+Prometheus federation lets multiple Prometheus servers scrape each other's metrics. This can help scale your monitoring setup by distributing the scraping load across several Prometheus instances, with a top-level Prometheus aggregating only the high-level summary metrics:
+
+```yaml
+scrape_configs:
+  - job_name: 'federate'
+    scrape_interval: 15s
     honor_labels: true
+    metrics_path: '/federate'
+    params:
+      match[]:
+        - '{job="prometheus"}' # Only federate the metrics you need
+        - 'up'
+    static_configs:
+      - targets:
+          - 'prometheus-us-east-1:9090'
+          - 'prometheus-eu-west-1:9090'
 ```
-
-This will configure Prometheus to scrape metrics from the `prometheus1` server.
 
 ## Common Mistakes
-When optimizing Prometheus memory usage, there are several common mistakes to watch out for:
 
-* Not monitoring memory usage: Failing to monitor memory usage can lead to performance issues and crashes.
-* Not optimizing high-cardinality metrics: Failing to optimize high-cardinality metrics can lead to high memory usage.
-* Not implementing metric retention policies: Failing to implement metric retention policies can lead to high memory usage.
+When optimizing Prometheus memory usage, avoid these common pitfalls:
 
-To monitor memory usage, you can use the `prometheus_memory_usage` metric, which is available in Prometheus 2.26.0 and later.
-
-```promql
-# Query the prometheus_memory_usage metric
-prometheus_memory_usage
-```
+- **Not monitoring Prometheus itself**: Use `prometheus_tsdb_head_series` to track how many active time series Prometheus is storing. Set an alert if this number grows unexpectedly.
+- **Using high-cardinality labels**: Labels like `user_id`, `session_id`, or `request_id` can create millions of time series. Never add these to metrics.
+- **Keeping retention too long without offloading**: If you need long-term data, use Thanos or Grafana Mimir rather than extending local Prometheus retention.
 
 ## Troubleshooting
-When troubleshooting Prometheus memory usage issues, there are several things to check:
 
-* Check the Prometheus configuration file for any misconfigurations.
-* Check the metric retention policies to ensure they are set correctly.
-* Check the Thanos configuration to ensure it is set up correctly.
-* Check the Prometheus logs for any error messages.
+When investigating high Prometheus memory usage, start here:
 
-For more information on troubleshooting Prometheus, see <!-- TODO: Add internal link to: prometheus-troubleshooting -->.
+- Check `/tsdb-status` in the Prometheus UI to see which metrics and labels contribute the most series.
+- Query `topk(10, count by (__name__)({__name__=~".+"}))" to find your top 10 metric cardinality contributors.
+- Check the Prometheus logs for WAL-related errors, which can indicate storage pressure.
+- Review your `metric_relabel_configs` and `relabel_configs` to ensure unnecessary metrics and labels are being dropped at scrape time.
 
 ## Key Takeaways
-* Identify and optimize high-cardinality metrics to reduce memory usage in Prometheus.
-* Implement metric retention policies and use Thanos for long-term storage.
-* Monitor Prometheus memory usage and adjust configurations as needed to prevent performance issues.
-* Use Prometheus federation to distribute metrics across multiple servers and reduce memory usage.
-* Regularly check the Prometheus configuration file, metric retention policies, and Thanos configuration to ensure they are set up correctly.
+
+- Identify and eliminate high-cardinality labels and metrics — they are the primary driver of Prometheus memory usage.
+- Implement retention limits using `--storage.tsdb.retention.time` and `--storage.tsdb.retention.size`.
+- Use Thanos or Grafana Mimir for long-term storage so you can keep local Prometheus retention short.
+- Use Prometheus federation to distribute scraping load at scale.
+- Monitor Prometheus itself with `prometheus_tsdb_head_series` and set alerts to catch cardinality explosions early.

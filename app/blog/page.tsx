@@ -54,7 +54,7 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
         </h2>
         
         {/* Description */}
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 leading-relaxed">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-5 line-clamp-3 leading-relaxed flex-1">
           {post.description}
         </p>
         
@@ -136,11 +136,11 @@ export default async function BlogPage({
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white py-16 sm:py-20 lg:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-5 leading-tight">
             DevOps Blog
           </h1>
-          <p className="text-lg sm:text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
-            Practical tutorials, troubleshooting guides, and best practices from real production experience.
+          <p className="text-lg sm:text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
+            Practical tutorials, real-world troubleshooting guides, and battle-tested best practices from production environments.
           </p>
         </div>
       </section>

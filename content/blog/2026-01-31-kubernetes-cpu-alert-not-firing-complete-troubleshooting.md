@@ -39,10 +39,8 @@ You've set up CPU alerts in your Kubernetes cluster, but they're not firing even
 First, verify that CPU metrics are actually being scraped:
 
 ```promql
-# Check if container metrics exist
 container_cpu_usage_seconds_total{namespace="your-namespace"}
 
-# Check the scrape targets
 up{job="kubelet"}
 ```
 
@@ -57,10 +55,8 @@ If you see no data, the issue is at the collection layer:
 The most common mistake is using instantaneous values instead of rates:
 
 ```yaml
-# ❌ Wrong - This compares counters, not actual usage
 expr: container_cpu_usage_seconds_total > 0.8
 
-# ✅ Correct - Calculate actual CPU usage rate
 expr: |
   sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (pod, namespace)
   /
@@ -87,10 +83,8 @@ Check the Prometheus Alerts page - if your alert shows "Pending" but never "Firi
 Even if Prometheus fires alerts, Alertmanager might not route them:
 
 ```bash
-# Check if alerts are reaching Alertmanager
 curl -s http://alertmanager:9093/api/v2/alerts | jq .
 
-# Check Alertmanager config
 amtool config show --alertmanager.url=http://alertmanager:9093
 ```
 
