@@ -503,6 +503,109 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Free DevOps Tools Section ──────────────────────────────── */}
+      <section className="py-12 sm:py-16 md:py-20 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <span className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
+              ⚡ Free DevOps Tools
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+              Tools Built for DevOps Engineers
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Free, browser-based tools to speed up your daily DevOps workflow. No login required.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Link href="/tools/pipeline-generator">
+              <div className="relative group bg-gradient-to-br from-gray-900 via-blue-950 to-indigo-900 rounded-3xl overflow-hidden shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 cursor-pointer border border-blue-800/40 hover:border-blue-500/60">
+                {/* Background glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-transparent to-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8 p-8 sm:p-10 lg:p-12">
+                  {/* Left: Content */}
+                  <div className="flex-1 text-center lg:text-left">
+                    <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full mb-5">
+                      🆕 New Tool
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight">
+                      CI/CD Pipeline Generator
+                    </h3>
+                    <p className="text-blue-100 text-lg mb-6 max-w-xl leading-relaxed">
+                      Generate production-ready pipeline YAML files in seconds. Pick your platform, language, and deploy target — get a complete, copy-paste-ready configuration.
+                    </p>
+
+                    {/* Feature pills */}
+                    <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-8">
+                      {['GitHub Actions', 'GitLab CI', 'Jenkins', 'Node.js', 'Python', 'Go', 'Java', 'Docker', 'Kubernetes', 'AWS ECS', 'AWS ECR'].map(tag => (
+                        <span key={tag} className="text-xs px-3 py-1 bg-white/10 border border-white/20 text-white/80 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <motion.div
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 group-hover:from-blue-400 group-hover:to-indigo-400 text-white font-bold text-lg rounded-full shadow-lg transition-all duration-300"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span>⚡</span>
+                      Try Pipeline Generator — Free
+                      <motion.span
+                        animate={{ x: [0, 4, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        →
+                      </motion.span>
+                    </motion.div>
+                  </div>
+
+                  {/* Right: Preview card */}
+                  <div className="flex-shrink-0 w-full lg:w-80 bg-gray-900/80 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
+                    {/* Fake terminal header */}
+                    <div className="flex items-center gap-2 px-4 py-3 bg-gray-800 border-b border-gray-700">
+                      <div className="w-3 h-3 rounded-full bg-red-500" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                      <div className="w-3 h-3 rounded-full bg-green-500" />
+                      <span className="ml-2 text-gray-400 text-xs font-mono">ci-cd.yml</span>
+                    </div>
+                    {/* Fake code preview */}
+                    <div className="p-4 font-mono text-xs leading-6">
+                      <div><span className="text-blue-400">name:</span> <span className="text-green-400">CI/CD Pipeline</span></div>
+                      <div className="mt-1"><span className="text-blue-400">on:</span></div>
+                      <div className="pl-4"><span className="text-purple-400">push:</span></div>
+                      <div className="pl-8"><span className="text-blue-400">branches:</span> <span className="text-yellow-400">[&quot;main&quot;]</span></div>
+                      <div className="mt-1"><span className="text-blue-400">jobs:</span></div>
+                      <div className="pl-4"><span className="text-purple-400">build-test-deploy:</span></div>
+                      <div className="pl-8"><span className="text-blue-400">runs-on:</span> <span className="text-green-400">ubuntu-latest</span></div>
+                      <div className="pl-8 mt-1"><span className="text-blue-400">steps:</span></div>
+                      <div className="pl-10 text-gray-400">- Install deps</div>
+                      <div className="pl-10 text-gray-400">- Run tests</div>
+                      <div className="pl-10 text-gray-400">- Build Docker image</div>
+                      <div className="pl-10 text-gray-400">- Push to registry</div>
+                      <div className="pl-10 text-gray-400">- Deploy to K8s ✅</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Stats Section with Animated Counters */}
       <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-primary-600 to-accent-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
