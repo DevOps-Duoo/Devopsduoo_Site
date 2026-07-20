@@ -21,14 +21,6 @@ seo:
   canonical: "/blog/jenkins-to-github-actions-migration-complete-guide"
 ---
 
-## TL;DR
-
-* Migrate your CI/CD pipelines from Jenkins to GitHub Actions to improve scalability, security, and maintainability.
-
-* This guide provides a step-by-step approach to migrating your workflows, including handling dependencies, environment variables, and job configurations.
-
-* By the end of this tutorial, you'll have a working GitHub Actions workflow equivalent to your existing Jenkins pipeline.
-
 ## The Problem
 
 As a DevOps engineer, you're likely familiar with Jenkins, a popular CI/CD tool. However, managing Jenkins can be time-consuming, especially when dealing with scalability, security, and maintenance. GitHub Actions offers a more streamlined and integrated approach to CI/CD, with benefits like:

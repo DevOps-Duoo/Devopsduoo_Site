@@ -21,13 +21,6 @@ seo:
   canonical: "/blog/kubernetes-cpu-alert-not-firing-complete-troubleshooting"
 ---
 
-## TL;DR
-
-- **Check if metrics exist**: Run `container_cpu_usage_seconds_total` query in Prometheus
-- **Verify alert rules are loaded**: Check Prometheus `/rules` endpoint
-- **Confirm Alertmanager is connected**: Look for `alertmanager_notifications_total` metric
-- **Test with lower thresholds**: Temporarily reduce thresholds to verify the pipeline works
-
 ## The Problem
 
 You've set up CPU alerts in your Kubernetes cluster, but they're not firing even when pods are clearly under heavy load. This is one of the most frustrating monitoring issues because everything *looks* correct, but the alerts never trigger.

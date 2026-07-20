@@ -21,14 +21,6 @@ seo:
   canonical: "/blog/kubernetes-rbac-best-practices-for-multi-tenant-clusters"
 ---
 
-## TL;DR
-
-* Implement namespace isolation to ensure tenants cannot access each other's resources
-
-* Use service account security and least privilege access to minimize potential damage from compromised accounts
-
-* Configure cluster roles and role bindings to enforce fine-grained access control
-
 ## The Problem
 
 Kubernetes multi-tenancy is a complex topic, and implementing Role-Based Access Control (RBAC) is crucial to ensure secure and isolated environments for each tenant. Without proper RBAC configuration, tenants may be able to access each other's resources, compromising the security and integrity of the cluster. In this guide, you'll learn how to implement Kubernetes RBAC best practices for multi-tenant clusters, including namespace isolation, service account security, and cluster roles.
@@ -136,7 +128,6 @@ When implementing Kubernetes RBAC, there are several common mistakes to avoid:
 * **Overly permissive roles**: Granting too many privileges to users and service accounts can compromise the security of the cluster.
 
 * **Inadequate auditing and logging**: Failing to monitor and log access to resources can make it difficult to detect and respond to security incidents.
-
 
 ## Key Takeaways
 

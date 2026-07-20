@@ -21,14 +21,6 @@ seo:
   canonical: "/blog/kubernetes-ingress-controller-comparison-nginx-vs-traefik-vs"
 ---
 
-## TL;DR
-
-* This post compares the performance, security, and configurability of Nginx, Traefik, and HAProxy as Kubernetes Ingress Controllers.
-
-* We will provide step-by-step instructions for deploying each option, along with code examples and explanations.
-
-* By the end of this post, you will be able to choose the best Ingress Controller for your Kubernetes production environment.
-
 ## The Problem
 
 Kubernetes Ingress Controllers are a crucial component of any production-ready cluster, providing a single entry point for incoming traffic and routing it to the appropriate services. However, with so many options available, it can be difficult to choose the right one for your specific use case. In this post, we will compare the pros and cons of Nginx, Traefik, and HAProxy as Kubernetes Ingress Controllers, and provide practical guidance on how to deploy and configure each option.
@@ -168,7 +160,6 @@ If you encounter issues with your Ingress Controller, there are several troubles
 * Use the `kubectl` command to inspect the Ingress resource and verify that it is configured correctly
 
 * Use the `kubectl` command to verify that the service is running and accessible
-
 
 ## Key Takeaways
 

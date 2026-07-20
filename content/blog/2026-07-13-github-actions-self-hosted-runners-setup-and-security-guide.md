@@ -21,14 +21,6 @@ seo:
   canonical: "/blog/github-actions-self-hosted-runners-setup-and-security-guide"
 ---
 
-## TL;DR
-
-* Set up self-hosted runners for GitHub Actions to optimize resource utilization and enhance security in your CI/CD pipelines.
-
-* Implement autoscaling for self-hosted runners to ensure efficient resource allocation and reduce costs.
-
-* Ensure proper security configurations to protect your runners and the code they execute.
-
 ## The Problem
 
 As a DevOps engineer, you're likely familiar with the challenges of managing CI/CD pipelines, particularly when it comes to resource utilization and security. GitHub Actions provides a powerful platform for automating your workflows, but relying on cloud-based runners can lead to increased costs and reduced control over the environment. Self-hosted runners offer a solution to these problems, allowing you to run your workflows on your own infrastructure. In this guide, we'll walk you through the setup and security considerations for GitHub Actions self-hosted runners.

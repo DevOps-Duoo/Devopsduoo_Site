@@ -21,14 +21,6 @@ seo:
   canonical: "/blog/ansible-vs-terraform-when-to-use-each-for-infrastructure"
 ---
 
-## TL;DR
-
-* Use Ansible for configuration management and orchestrating complex workflows, especially when dealing with existing infrastructure or requiring more flexibility in your automation.
-
-* Use Terraform for infrastructure provisioning and managing cloud-agnostic resources, particularly when you need to create or destroy entire environments.
-
-* Consider using both tools in tandem to achieve a comprehensive infrastructure as code (IaC) solution.
-
 ## The Problem
 
 As a DevOps engineer, managing infrastructure efficiently is crucial for maintaining a scalable and reliable production environment. Two popular tools, Ansible and Terraform, can help you achieve this goal, but understanding when to use each is key to maximizing their benefits. In this article, you'll learn how to choose between Ansible and Terraform for your infrastructure needs, including practical examples and step-by-step instructions.

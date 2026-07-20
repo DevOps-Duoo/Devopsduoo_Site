@@ -21,14 +21,6 @@ seo:
   canonical: "/blog/grafana-dashboard-best-practices-for-devops-teams"
 ---
 
-## TL;DR
-
-* Design and build effective Grafana dashboards for monitoring and alerting in production environments
-
-* Implement best practices for dashboard organization, panel configuration, and data visualization
-
-* Leverage Prometheus and Grafana for robust monitoring and alerting capabilities
-
 ## What You'll Learn
 
 In this guide, we'll cover the essential best practices for creating and managing Grafana dashboards in DevOps teams. You'll learn how to design and build effective dashboards, configure panels and data sources, and implement alerting and notification systems. We'll also discuss common mistakes and troubleshooting techniques to help you overcome potential issues.

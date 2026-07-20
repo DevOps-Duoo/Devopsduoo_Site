@@ -21,14 +21,6 @@ seo:
   canonical: "/blog/kubernetes-network-policies-complete-security-guide"
 ---
 
-## TL;DR
-
-* Implement Kubernetes network policies to secure pod-to-pod communication and enforce a zero-trust security model.
-
-* Use network policy tools like Calico (v3.20.2) or Cilium (v1.11.5) to define and enforce network policies.
-
-* Follow best practices to avoid common mistakes and ensure optimal performance.
-
 ## What You'll Learn
 
 Kubernetes network policies are a crucial component of securing your cluster. In this guide, you'll learn how to implement network policies to restrict pod-to-pod communication, allow incoming traffic, and enforce a zero-trust security model. We'll cover the basics of network policies, provide step-by-step instructions for implementation, and discuss common mistakes to avoid.

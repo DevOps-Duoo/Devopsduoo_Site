@@ -21,12 +21,6 @@ seo:
   canonical: "/blog/prometheus-memory-usage-too-high-optimization-guide"
 ---
 
-## TL;DR
-
-- Identify and eliminate high-cardinality metrics to reduce Prometheus memory usage.
-- Implement metric retention policies and use Thanos for long-term storage to keep Prometheus lean.
-- Monitor Prometheus memory usage proactively to prevent performance issues and crashes.
-
 ## The Problem
 
 Prometheus is a popular monitoring system used in production environments, but high memory usage can lead to performance degradation and even out-of-memory crashes. Understanding why Prometheus uses so much memory — and knowing what to do about it — is a critical skill for any DevOps engineer.
