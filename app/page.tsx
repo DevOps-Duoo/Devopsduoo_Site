@@ -504,7 +504,7 @@ export default function Home() {
       </section>
 
       {/* ── Free DevOps Tools Section ──────────────────────────────── */}
-      <section className="py-12 sm:py-16 md:py-20 bg-white dark:bg-gray-900">
+      <section id="tools" className="py-12 sm:py-16 md:py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
