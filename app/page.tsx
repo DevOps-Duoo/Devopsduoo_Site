@@ -673,6 +673,90 @@ export default function Home() {
                 </div>
               </div>
             </Link>
+
+            <Link href="/dashboard-detective" className="block">
+              <div className="relative group bg-gradient-to-br from-gray-900 via-teal-950 to-cyan-900 rounded-3xl overflow-hidden shadow-2xl hover:shadow-teal-500/20 transition-all duration-500 cursor-pointer border border-teal-800/40 hover:border-teal-500/60">
+                {/* Background glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-teal-600/10 via-transparent to-cyan-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8 p-8 sm:p-10 lg:p-12">
+                  {/* Left: Content */}
+                  <div className="flex-1 text-center lg:text-left">
+                    <div className="inline-flex items-center gap-2 bg-teal-500/20 border border-teal-400/30 text-teal-300 text-xs font-semibold px-3 py-1 rounded-full mb-5">
+                      🎮 Interactive Game
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight">
+                      Dashboard Detective
+                    </h3>
+                    <p className="text-teal-100 text-lg mb-6 max-w-xl leading-relaxed">
+                      Can you keep production alive? Test your incident response skills in this real-time DevOps simulation. Triage CPU spikes, memory leaks, and DDoS attacks before the system crashes.
+                    </p>
+
+                    {/* Feature pills */}
+                    <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-8">
+                      {['Real-time Metrics', 'CPU Spikes', 'Memory Leaks', 'DDoS Attacks', 'Bad Deploys', '12 Scenarios', '5 Difficulty Levels'].map(tag => (
+                        <span key={tag} className="text-xs px-3 py-1 bg-white/10 border border-white/20 text-white/80 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <motion.div
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-teal-500 to-cyan-500 group-hover:from-teal-400 group-hover:to-cyan-400 text-white font-bold text-lg rounded-full shadow-lg transition-all duration-300"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span>🚀</span>
+                      Play Dashboard Detective — Free
+                      <motion.span
+                        animate={{ x: [0, 4, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        →
+                      </motion.span>
+                    </motion.div>
+                  </div>
+
+                  {/* Right: Preview card */}
+                  <div className="flex-shrink-0 w-full lg:w-80 bg-gray-900/80 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
+                    {/* Dashboard header */}
+                    <div className="flex items-center gap-2 px-4 py-3 bg-gray-800 border-b border-gray-700">
+                      <div className="w-3 h-3 rounded-full bg-red-500" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                      <div className="w-3 h-3 rounded-full bg-green-500" />
+                      <span className="ml-2 text-gray-400 text-xs font-mono">dashboard.devops</span>
+                    </div>
+                    {/* Mock dashboard */}
+                    <div className="p-4">
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {[
+                          { label: 'CPU', value: '87%', color: 'text-red-400' },
+                          { label: 'MEM', value: '45%', color: 'text-green-400' },
+                          { label: 'NET', value: '92ms', color: 'text-yellow-400' },
+                          { label: 'ERR', value: '2%', color: 'text-green-400' },
+                        ].map((m, i) => (
+                          <div key={i} className="bg-gray-800/80 rounded-lg p-2 text-center border border-gray-700/50">
+                            <div className="text-[9px] uppercase text-gray-500">{m.label}</div>
+                            <div className={`text-sm font-bold ${m.color}`}>{m.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2 mb-2">
+                        <div className="flex items-center gap-1 mb-1">
+                          <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                          <span className="text-[9px] text-red-400 font-bold uppercase">Alert</span>
+                        </div>
+                        <div className="text-xs text-gray-300">🗄️ Database Query Storm</div>
+                      </div>
+                      <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full" style={{ width: '62%' }} />
+                      </div>
+                      <div className="text-[8px] text-gray-500 mt-1 text-center">SYSTEM HEALTH — 62%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </motion.div>
         </div>
       </section>
