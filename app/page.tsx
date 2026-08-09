@@ -757,6 +757,64 @@ export default function Home() {
                 </div>
               </div>
             </Link>
+
+            {/* Pipeline Factory Game */}
+            <Link href="/pipeline-factory" className="block">
+              <div className="relative group bg-gradient-to-br from-gray-900 via-indigo-950 to-blue-900 rounded-3xl overflow-hidden shadow-2xl hover:shadow-indigo-500/20 transition-all duration-500 cursor-pointer border border-indigo-800/40 hover:border-indigo-500/60">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-transparent to-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8 p-8 sm:p-10 lg:p-12">
+                  <div className="flex-1 text-center lg:text-left">
+                    <div className="inline-flex items-center gap-2 bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold px-3 py-1 rounded-full mb-5">
+                      🎮 Interactive Game
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 leading-tight">
+                      The Pipeline Factory
+                    </h3>
+                    <p className="text-indigo-100 text-lg mb-6 max-w-xl leading-relaxed">
+                      Build the ultimate software delivery machine. Assemble your CI/CD stages, run the conveyor belt, and see if your code survives the journey to production.
+                    </p>
+                    <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-8">
+                      {['Drag & Drop', 'CI/CD Logic', 'Security Gates', 'Live Animation', 'DevOps Education'].map(tag => (
+                        <span key={tag} className="text-xs px-3 py-1 bg-white/10 border border-white/20 text-white/80 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <motion.div
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 group-hover:from-blue-400 group-hover:to-indigo-400 text-white font-bold text-lg rounded-full shadow-lg transition-all duration-300"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span>🏭</span> Play Pipeline Factory
+                      <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>→</motion.span>
+                    </motion.div>
+                  </div>
+                  
+                  {/* Preview Card */}
+                  <div className="flex-shrink-0 w-full lg:w-80 bg-gray-900/80 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
+                    <div className="flex items-center gap-2 px-4 py-3 bg-gray-800 border-b border-gray-700">
+                      <div className="w-3 h-3 rounded-full bg-red-500" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                      <div className="w-3 h-3 rounded-full bg-green-500" />
+                      <span className="ml-2 text-gray-400 text-xs font-mono">pipeline.factory</span>
+                    </div>
+                    <div className="p-4 bg-slate-900 min-h-[200px] flex items-center justify-center relative overflow-hidden">
+                      <div className="absolute top-1/2 left-0 right-0 h-4 bg-slate-800 -translate-y-1/2 rounded-full overflow-hidden border border-slate-700">
+                         <div className="w-[150%] h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.05)_10px,rgba(255,255,255,0.05)_20px)] animate-[pf-conveyorMove_1s_linear_infinite]" />
+                      </div>
+                      <div className="relative z-10 flex gap-4 w-full justify-between px-2">
+                        {['🔨', '🧪', '🔒', '🚀'].map((icon, i) => (
+                          <div key={i} className={`w-12 h-12 rounded-full flex items-center justify-center text-xl border-2 ${i === 1 ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-600 bg-slate-800'}`}>
+                            {icon}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="absolute top-1/2 left-[30%] -translate-y-1/2 w-8 h-8 bg-white rounded shadow-[0_0_15px_rgba(255,255,255,0.5)] flex items-center justify-center text-sm z-20">📦</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </motion.div>
         </div>
       </section>
