@@ -52,21 +52,19 @@ RUN useradd -m -s /bin/bash labuser \
     && chmod 0440 /etc/sudoers.d/labuser
 
 # ── Set up a welcome message & lab environment ────────────
-RUN cat > /etc/profile.d/lab-welcome.sh << 'WELCOME'
-#!/bin/bash
-echo ""
-echo "  ╔═══════════════════════════════════════════════════════╗"
-echo "  ║          🐧  DevOps Duoo - Linux Lab  🐧             ║"
-echo "  ║                                                       ║"
-echo "  ║  Welcome to the Red Hat Basic Linux Lab!              ║"
-echo "  ║  You have 30 minutes of free practice time.           ║"
-echo "  ║                                                       ║"
-echo "  ║  OS: $(cat /etc/redhat-release 2>/dev/null || echo 'Red Hat UBI 9')  "
-echo "  ║  Follow the lab steps on the left panel.              ║"
-echo "  ╚═══════════════════════════════════════════════════════╝"
-echo ""
-WELCOME
-RUN chmod +x /etc/profile.d/lab-welcome.sh
+RUN echo '#!/bin/bash' > /etc/profile.d/lab-welcome.sh \
+    && echo 'echo ""' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ╔═══════════════════════════════════════════════════════╗"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║          🐧  DevOps Duoo - Linux Lab  🐧             ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║                                                       ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║  Welcome to the Red Hat Basic Linux Lab!              ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║  You have 30 minutes of free practice time.           ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║                                                       ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║  OS: \$(cat /etc/redhat-release 2>/dev/null || echo \"Red Hat UBI 9\")  "' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║  Follow the lab steps on the left panel.              ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ╚═══════════════════════════════════════════════════════╝"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo ""' >> /etc/profile.d/lab-welcome.sh \
+    && chmod +x /etc/profile.d/lab-welcome.sh
 
 # ── Auto-termination script ──────────────────────────────
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
