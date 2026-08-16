@@ -24,7 +24,6 @@ RUN dnf install -y \
     wget \
     vim-minimal \
     nano \
-    tree \
     which \
     man-db \
     less \
@@ -35,7 +34,6 @@ RUN dnf install -y \
     passwd \
     sudo \
     hostname \
-    jq \
     diffutils \
     && dnf clean all \
     && rm -rf /var/cache/dnf
