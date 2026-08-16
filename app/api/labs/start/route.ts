@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     if (githubToken) {
       try {
-        await fetch(
+        const githubRes = await fetch(
           `https://api.github.com/repos/${githubRepo}/actions/workflows/provision-lab.yml/dispatches`,
           {
             method: 'POST',
@@ -119,9 +119,23 @@ export async function POST(request: NextRequest) {
             }),
           }
         );
+        
+        if (!githubRes.ok) {
+          const errorText = await githubRes.text();
+          console.error(`GitHub API Error (${githubRes.status}):`, errorText);
+          // Return the error to the frontend so we can see it
+          return NextResponse.json(
+            { error: `GitHub API Error: ${githubRes.status} - ${errorText}` },
+            { status: 500 }
+          );
+        }
+        console.log('Successfully triggered provision-lab.yml on GitHub');
       } catch (error) {
-        console.error('Failed to trigger GitHub Actions:', error);
-        // Continue anyway - the session can be polled and will timeout
+        console.error('Network failure triggering GitHub Actions:', error);
+        return NextResponse.json(
+          { error: 'Failed to reach GitHub API' },
+          { status: 500 }
+        );
       }
     }
 

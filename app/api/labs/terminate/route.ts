@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
 
     if (githubToken) {
       try {
-        await fetch(
-          `https://api.github.com/repos/${githubRepo}/actions/workflows/cleanup-labs.yml/dispatches`,
+        const githubRes = await fetch(
+          `https://api.github.com/repos/${githubRepo}/actions/workflows/terminate-lab.yml/dispatches`,
           {
             method: 'POST',
             headers: {
@@ -40,8 +40,22 @@ export async function POST(request: NextRequest) {
             }),
           }
         );
+        
+        if (!githubRes.ok) {
+          const errorText = await githubRes.text();
+          console.error(`GitHub API Error (${githubRes.status}):`, errorText);
+          return NextResponse.json(
+            { error: `GitHub API Error: ${githubRes.status} - ${errorText}` },
+            { status: 500 }
+          );
+        }
+        console.log('Successfully triggered terminate-lab.yml on GitHub');
       } catch (error) {
-        console.error('Failed to trigger cleanup workflow:', error);
+        console.error('Network failure triggering GitHub Actions:', error);
+        return NextResponse.json(
+          { error: 'Failed to reach GitHub API' },
+          { status: 500 }
+        );
       }
     }
 
