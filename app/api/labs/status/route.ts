@@ -57,13 +57,13 @@ export async function GET(request: NextRequest) {
     const instanceId = instance.InstanceId;
     const publicIp = instance.PublicIpAddress;
 
-    // 2. Query SSM to get the secure HTTPS tunnel URL
+    // 2. Query SSM to see if the container is running and what port it is on
     const ssm = new SSMClient(awsConfig);
     const ssmCmd = new SendCommandCommand({
       InstanceIds: [instanceId],
       DocumentName: 'AWS-RunShellScript',
       Parameters: {
-        commands: [`cat /opt/devops-duoo-labs/sessions/lab-${sessionId}-url.txt 2>/dev/null`]
+        commands: [`docker ps --filter "name=lab-${sessionId}" --format "{{.Ports}}"`]
       }
     });
 
@@ -86,12 +86,16 @@ export async function GET(request: NextRequest) {
     const invocationRes = await ssm.send(invocationCmd);
     const output = (invocationRes.StandardOutputContent || '').trim();
 
-    // Check if we got a valid localhost.run URL
-    if (invocationRes.Status === 'Success' && output.startsWith('https://') && output.includes('lhr.life')) {
+    // Parse docker output (e.g., "0.0.0.0:7681->7681/tcp")
+    const portMatch = output.match(/:(\d+)->/);
+
+    if (invocationRes.Status === 'Success' && portMatch && portMatch[1]) {
+      const port = portMatch[1];
+      
       return NextResponse.json({
         sessionId,
         status: 'ready',
-        terminalUrl: output,
+        terminalUrl: `http://${publicIp}:${port}`,
         message: 'Lab is ready!',
         expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       });
