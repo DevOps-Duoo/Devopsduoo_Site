@@ -142,7 +142,7 @@ This lab is perfect for anyone starting their DevOps journey. A solid Linux foun
         hint: 'Always add #!/bin/bash as the first line and chmod +x to make scripts executable',
       },
     ],
-    dockerImage: 'public.ecr.aws/redhat/ubi9:latest',
+    dockerImage: 'registry.access.redhat.com/ubi9/ubi:latest',
     ecsTaskFamily: 'lab-redhat-basic-linux',
     status: 'available',
     popularityScore: 98,

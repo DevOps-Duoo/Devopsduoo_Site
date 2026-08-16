@@ -1,10 +1,10 @@
 # ─────────────────────────────────────────────────────────
 # Red Hat Basic Linux Lab — DevOps Duoo
-# Uses the official Red Hat UBI9 (Universal Base Image) from AWS ECR Public
-# Image: public.ecr.aws/redhat/ubi9:latest
+# Uses the official Red Hat UBI9 (Universal Base Image)
+# Image: registry.access.redhat.com/ubi9/ubi:latest
 # ─────────────────────────────────────────────────────────
 
-FROM public.ecr.aws/redhat/ubi9:latest
+FROM registry.access.redhat.com/ubi9/ubi:latest
 
 LABEL maintainer="DevOps Duoo <hello@devopsduoo.com>"
 LABEL description="Red Hat Basic Linux Lab environment with web terminal"
