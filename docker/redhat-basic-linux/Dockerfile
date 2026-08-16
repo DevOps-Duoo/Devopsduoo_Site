@@ -10,7 +10,7 @@ LABEL maintainer="DevOps Duoo <hello@devopsduoo.com>"
 LABEL description="Red Hat Basic Linux Lab environment with web terminal"
 
 # ── Install essential Linux learning tools ────────────────
-RUN dnf install -y \
+RUN dnf install -y --allowerasing \
     bash \
     coreutils \
     findutils \
