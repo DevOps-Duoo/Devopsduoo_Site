@@ -244,15 +244,26 @@ export default function LabTerminal({ terminalUrl, isConnected, sessionStatus }:
       </div>
 
       {/* Terminal Body */}
-      <div
-        ref={terminalRef}
-        className="min-h-[400px] lg:min-h-[500px] p-1"
-        style={{ background: '#0a0e1a' }}
-      />
+      <div className="relative min-h-[400px] lg:min-h-[500px] w-full" style={{ background: '#0a0e1a' }}>
+        {isConnected && terminalUrl ? (
+          <iframe 
+            src={terminalUrl} 
+            className="absolute inset-0 w-full h-full border-none p-1"
+            title="Lab Terminal"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            allow="clipboard-read; clipboard-write"
+          />
+        ) : (
+          <div
+            ref={terminalRef}
+            className="absolute inset-0 w-full h-full p-1"
+          />
+        )}
+      </div>
 
       {/* Loading overlay */}
       <AnimatePresence>
-        {!isLoaded && (
+        {!isLoaded && !isConnected && (
           <motion.div
             className="absolute inset-0 flex items-center justify-center bg-[#0a0e1a]"
             initial={{ opacity: 1 }}
@@ -261,7 +272,7 @@ export default function LabTerminal({ terminalUrl, isConnected, sessionStatus }:
           >
             <div className="flex flex-col items-center gap-4">
               <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-gray-400 font-mono">Initializing terminal...</span>
+              <span className="text-sm text-gray-400 font-mono">Initializing demo terminal...</span>
             </div>
           </motion.div>
         )}
