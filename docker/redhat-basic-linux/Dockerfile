@@ -75,8 +75,6 @@ EXPOSE 7681
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 --start-period=10s \
     CMD curl -f http://localhost:7681 || exit 1
 
-# ── Run as labuser by default ────────────────────────────
-USER labuser
-WORKDIR /home/labuser
-
+# We run ttyd as root to ensure it has permission to allocate pseudo-terminals (/dev/ptmx).
+# ttyd will spawn the shell as labuser securely.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
