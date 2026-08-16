@@ -155,11 +155,8 @@ jobs:
           DOCKERFILE_B64="$3"
           ENTRYPOINT_B64="$4"
 
-          # Check if image already exists
-          if docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
-            echo "Image already exists: $IMAGE_NAME"
-            exit 0
-          fi
+          # We rely on Docker's native layer caching instead of skipping the build entirely.
+          # This ensures that updates to the Dockerfile or entrypoint.sh are always applied.
 
           echo "Building image: $IMAGE_NAME"
           mkdir -p "$BUILD_DIR"
