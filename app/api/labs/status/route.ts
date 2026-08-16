@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { EC2Client, DescribeInstancesCommand } from '@aws-sdk/client-ec2';
+import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws-sdk/client-ssm';
 
-// This would be shared with the start route in production (via Redis/DynamoDB)
-// For now, we return a demo response
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get('sessionId');
@@ -13,20 +13,108 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // In production, this would check:
-  // 1. The GitHub Actions run status
-  // 2. The ECS task status
-  // 3. The container health check
-  // 4. Return the terminal URL once ready
+  // Netlify reserves standard AWS_* variables, so we use LAB_AWS_* instead
+  if (!process.env.LAB_AWS_ACCESS_KEY_ID || !process.env.LAB_AWS_SECRET_ACCESS_KEY) {
+    return NextResponse.json({
+      sessionId,
+      status: 'provisioning',
+      message: 'Demo mode active. Add AWS credentials for real provisioning.',
+    });
+  }
 
-  // For now, return a demo response
-  // The frontend handles this gracefully and falls back to demo mode
+  try {
+    const region = process.env.LAB_AWS_REGION || 'ap-south-1';
+    
+    // Configure AWS clients with custom credentials
+    const awsConfig = {
+      region,
+      credentials: {
+        accessKeyId: process.env.LAB_AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.LAB_AWS_SECRET_ACCESS_KEY,
+      }
+    };
+    
+    // 1. Find the EC2 instance
+    const ec2 = new EC2Client(awsConfig);
+    const describeCmd = new DescribeInstancesCommand({
+      Filters: [
+        { Name: 'tag:Name', Values: ['devops-duoo-lab-server'] },
+        { Name: 'instance-state-name', Values: ['running'] }
+      ]
+    });
+    
+    const ec2Res = await ec2.send(describeCmd);
+    const instance = ec2Res.Reservations?.[0]?.Instances?.[0];
+    
+    if (!instance || !instance.InstanceId || !instance.PublicIpAddress) {
+      return NextResponse.json({
+        sessionId,
+        status: 'provisioning',
+        message: 'Waiting for EC2 server to start...'
+      });
+    }
 
-  return NextResponse.json({
-    sessionId,
-    status: 'provisioning',
-    message: 'Environment is being provisioned. This is a demo response — configure AWS credentials for real provisioning.',
-    startedAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-  });
+    const instanceId = instance.InstanceId;
+    const publicIp = instance.PublicIpAddress;
+
+    // 2. Query SSM to see if the container is running and what port it is on
+    const ssm = new SSMClient(awsConfig);
+    const ssmCmd = new SendCommandCommand({
+      InstanceIds: [instanceId],
+      DocumentName: 'AWS-RunShellScript',
+      Parameters: {
+        commands: [`docker ps --filter "name=lab-${sessionId}" --format "{{.Ports}}"`]
+      }
+    });
+
+    const ssmRes = await ssm.send(ssmCmd);
+    const commandId = ssmRes.Command?.CommandId;
+
+    if (!commandId) {
+      throw new Error("Failed to send SSM command");
+    }
+
+    // Wait briefly for the command to execute
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Get the output
+    const invocationCmd = new GetCommandInvocationCommand({
+      CommandId: commandId,
+      InstanceId: instanceId,
+    });
+
+    const invocationRes = await ssm.send(invocationCmd);
+    const output = (invocationRes.StandardOutputContent || '').trim();
+
+    // Parse docker output (e.g., "0.0.0.0:7681->7681/tcp")
+    const portMatch = output.match(/:(\d+)->/);
+
+    if (invocationRes.Status === 'Success' && portMatch && portMatch[1]) {
+      const port = portMatch[1];
+      
+      return NextResponse.json({
+        sessionId,
+        status: 'ready',
+        terminalUrl: `http://${publicIp}:${port}`,
+        message: 'Lab is ready!',
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      });
+    } else {
+      // Container not found or still building
+      return NextResponse.json({
+        sessionId,
+        status: 'provisioning',
+        message: 'Container is building or starting...'
+      });
+    }
+
+  } catch (error) {
+    console.error('Error checking lab status:', error);
+    // If we error out checking AWS, just return provisioning so it keeps trying
+    return NextResponse.json({
+      sessionId,
+      status: 'provisioning',
+      message: 'Checking status...'
+    });
+  }
 }
