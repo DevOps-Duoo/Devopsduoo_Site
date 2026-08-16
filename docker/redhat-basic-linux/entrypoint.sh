@@ -31,4 +31,4 @@ exec ttyd \
     --ping-interval 30 \
     --max-clients 1 \
     --title "DevOps Duoo - Linux Lab" \
-    bash --login
+    /bin/bash --login

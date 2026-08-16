@@ -244,38 +244,15 @@ export default function LabTerminal({ terminalUrl, isConnected, sessionStatus }:
       </div>
 
       {/* Terminal Body */}
-      <div className="relative min-h-[400px] lg:min-h-[500px] w-full flex flex-col" style={{ background: '#0a0e1a' }}>
+      <div className="relative min-h-[400px] lg:min-h-[500px] w-full" style={{ background: '#0a0e1a' }}>
         {isConnected && terminalUrl ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-6">
-            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-              <span className="text-3xl">💻</span>
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white tracking-wide">Environment Ready!</h3>
-              <p className="text-gray-400 max-w-sm text-sm leading-relaxed">
-                Your dedicated Linux lab is provisioned and ready on AWS.
-              </p>
-            </div>
-
-            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg max-w-sm text-left">
-              <p className="text-xs text-amber-200/90 leading-relaxed flex items-start gap-2">
-                <span className="text-amber-400 mt-0.5">⚠️</span>
-                <span>
-                  To ensure maximum security and avoid browser 'Mixed Content' blocking, the live terminal must be opened in a new secure window.
-                </span>
-              </p>
-            </div>
-            
-            <a 
-              href={terminalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-gray-900 font-bold rounded-lg transition-all shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:shadow-[0_0_30px_rgba(52,211,153,0.5)] hover:-translate-y-0.5 flex items-center gap-2"
-            >
-              Launch Terminal 🚀
-            </a>
-          </div>
+          <iframe 
+            src={terminalUrl} 
+            className="absolute inset-0 w-full h-full border-none p-1"
+            title="Lab Terminal"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            allow="clipboard-read; clipboard-write"
+          />
         ) : (
           <div
             ref={terminalRef}
