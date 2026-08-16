@@ -26,6 +26,7 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
     { name: 'Services', path: '/services' },
+    { name: 'Labs', path: '/labs', isNew: true },
     { name: 'DevOps Tools', path: '/#tools' },
     { name: 'Blog', path: '/blog' },
     { name: 'Contact', path: '/contact' },
@@ -71,7 +72,14 @@ export default function Navbar() {
                   }`}
                   whileHover={{ y: -2 }}
                 >
-                  {link.name}
+                  <span className="flex items-center gap-1.5">
+                    {link.name}
+                    {'isNew' in link && link.isNew && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse">
+                        New
+                      </span>
+                    )}
+                  </span>
                   {pathname === link.path && (
                     <motion.div
                       className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-600 to-accent-600"

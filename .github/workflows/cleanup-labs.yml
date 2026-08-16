@@ -1,0 +1,160 @@
+name: Cleanup Lab Environments
+
+on:
+  # Run every 15 minutes as a safety net
+  schedule:
+    - cron: '*/15 * * * *'
+
+  # Can also be triggered manually or via API
+  workflow_dispatch:
+    inputs:
+      session_id:
+        description: 'Specific session ID to terminate (optional — omit to cleanup all expired)'
+        required: false
+        type: string
+
+env:
+  AWS_REGION: ap-south-1
+  CLUSTER_NAME: devops-duoo-labs
+  MAX_TTL_MINUTES: 35  # 30 min TTL + 5 min buffer
+
+jobs:
+  cleanup:
+    name: Cleanup Expired Labs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Cleanup Specific Session
+        if: ${{ inputs.session_id != '' }}
+        run: |
+          echo "🔍 Looking for session: ${{ inputs.session_id }}"
+
+          # Find tasks with matching session ID tag
+          TASK_ARNS=$(aws ecs list-tasks \
+            --cluster ${{ env.CLUSTER_NAME }} \
+            --query 'taskArns' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -z "$TASK_ARNS" ]; then
+            echo "ℹ️ No running tasks found"
+            exit 0
+          fi
+
+          for TASK_ARN in $TASK_ARNS; do
+            SESSION_TAG=$(aws ecs describe-tasks \
+              --cluster ${{ env.CLUSTER_NAME }} \
+              --tasks $TASK_ARN \
+              --query "tasks[0].tags[?key=='SessionId'].value" \
+              --output text 2>/dev/null || echo "")
+
+            if [ "$SESSION_TAG" = "${{ inputs.session_id }}" ]; then
+              echo "🗑️ Stopping task: $TASK_ARN (Session: $SESSION_TAG)"
+              aws ecs stop-task \
+                --cluster ${{ env.CLUSTER_NAME }} \
+                --task $TASK_ARN \
+                --reason "Manual termination via cleanup workflow"
+              echo "✅ Task stopped"
+            fi
+          done
+
+      - name: Cleanup All Expired Sessions
+        if: ${{ inputs.session_id == '' || inputs.session_id == null }}
+        run: |
+          echo "🔍 Scanning for expired lab environments..."
+          echo "   Max TTL: ${{ env.MAX_TTL_MINUTES }} minutes"
+
+          CURRENT_TIME=$(date -u +%s)
+          EXPIRED_COUNT=0
+          ACTIVE_COUNT=0
+
+          # List all running tasks in the cluster
+          TASK_ARNS=$(aws ecs list-tasks \
+            --cluster ${{ env.CLUSTER_NAME }} \
+            --desired-status RUNNING \
+            --query 'taskArns[]' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -z "$TASK_ARNS" ]; then
+            echo "ℹ️ No running tasks found. Cluster is clean."
+            exit 0
+          fi
+
+          # Check each task
+          for TASK_ARN in $TASK_ARNS; do
+            TASK_INFO=$(aws ecs describe-tasks \
+              --cluster ${{ env.CLUSTER_NAME }} \
+              --tasks $TASK_ARN \
+              --query 'tasks[0]' \
+              --output json 2>/dev/null)
+
+            # Get creation time from tags
+            CREATED_AT=$(echo "$TASK_INFO" | jq -r '.tags[]? | select(.key=="CreatedAt") | .value // empty')
+            SESSION_ID=$(echo "$TASK_INFO" | jq -r '.tags[]? | select(.key=="SessionId") | .value // empty')
+            LAB_ID=$(echo "$TASK_INFO" | jq -r '.tags[]? | select(.key=="LabId") | .value // empty')
+            TTL=$(echo "$TASK_INFO" | jq -r '.tags[]? | select(.key=="TTL") | .value // "30"')
+
+            if [ -z "$CREATED_AT" ]; then
+              # No creation time tag — use task start time
+              CREATED_AT=$(echo "$TASK_INFO" | jq -r '.startedAt // .createdAt // empty')
+            fi
+
+            if [ -n "$CREATED_AT" ]; then
+              CREATED_EPOCH=$(date -d "$CREATED_AT" +%s 2>/dev/null || date -jf "%Y-%m-%dT%H:%M:%SZ" "$CREATED_AT" +%s 2>/dev/null || echo "0")
+              AGE_MINUTES=$(( (CURRENT_TIME - CREATED_EPOCH) / 60 ))
+
+              if [ "$AGE_MINUTES" -ge "${{ env.MAX_TTL_MINUTES }}" ]; then
+                echo "🗑️ EXPIRED: Session=$SESSION_ID Lab=$LAB_ID Age=${AGE_MINUTES}min TTL=${TTL}min"
+                echo "   Stopping task: $TASK_ARN"
+
+                aws ecs stop-task \
+                  --cluster ${{ env.CLUSTER_NAME }} \
+                  --task $TASK_ARN \
+                  --reason "TTL expired (${AGE_MINUTES}min > ${TTL}min)"
+
+                EXPIRED_COUNT=$((EXPIRED_COUNT + 1))
+              else
+                REMAINING=$((TTL - AGE_MINUTES))
+                echo "✅ ACTIVE: Session=$SESSION_ID Lab=$LAB_ID Age=${AGE_MINUTES}min Remaining=${REMAINING}min"
+                ACTIVE_COUNT=$((ACTIVE_COUNT + 1))
+              fi
+            fi
+          done
+
+          echo ""
+          echo "═══════════════════════════════════════"
+          echo "  Cleanup Summary"
+          echo "═══════════════════════════════════════"
+          echo "  Active sessions: $ACTIVE_COUNT"
+          echo "  Expired & stopped: $EXPIRED_COUNT"
+          echo "═══════════════════════════════════════"
+
+      - name: Deregister Old Task Definitions
+        run: |
+          echo "🧹 Cleaning up old task definitions..."
+
+          # List task definitions with 'lab-' prefix that are INACTIVE
+          OLD_DEFS=$(aws ecs list-task-definitions \
+            --family-prefix lab- \
+            --status INACTIVE \
+            --query 'taskDefinitionArns' \
+            --output text 2>/dev/null || echo "")
+
+          CLEANED=0
+          for DEF in $OLD_DEFS; do
+            aws ecs deregister-task-definition --task-definition $DEF --no-cli-pager > /dev/null 2>&1 || true
+            CLEANED=$((CLEANED + 1))
+          done
+
+          if [ "$CLEANED" -gt 0 ]; then
+            echo "✅ Deregistered $CLEANED old task definitions"
+          else
+            echo "ℹ️ No old task definitions to clean up"
+          fi

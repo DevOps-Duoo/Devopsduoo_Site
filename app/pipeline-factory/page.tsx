@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 // ─── Types & Data ──────────────────────────────────────────────────────────
 
-type StageId = 'build' | 'unit_test' | 'sast_scan' | 'staging' | 'approval' | 'production';
+type StageId = 'build' | 'unit_test' | 'sast_scan' | 'compliance' | 'staging' | 'approval' | 'production';
 type GamePhase = 'SCENARIO_SELECT' | 'BUILDING' | 'RUNNING' | 'RESULT';
 
 interface StageConfig {

@@ -1,0 +1,327 @@
+name: Setup Lab Server (One-Time)
+
+# ─────────────────────────────────────────────────────────
+# Run this ONCE to create the free-tier EC2 lab server.
+# It creates a t2.micro instance with Docker pre-installed.
+# 
+# Free Tier: 750 hours/month of t2.micro = 24/7 for free
+# ─────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - create
+          - status
+          - destroy
+
+env:
+  AWS_REGION: ap-south-1
+  INSTANCE_TYPE: t2.micro
+  SERVER_NAME: devops-duoo-lab-server
+  KEY_NAME: devops-duoo-labs-key
+
+jobs:
+  setup:
+    name: ${{ inputs.action }} Lab Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ─── STATUS ────────────────────────────────────────
+      - name: Check Existing Server
+        id: check
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=${{ env.SERVER_NAME }}" "Name=instance-state-name,Values=running,stopped" \
+            --query 'Reservations[0].Instances[0].InstanceId' \
+            --output text 2>/dev/null || echo "None")
+
+          if [ "$INSTANCE_ID" != "None" ] && [ "$INSTANCE_ID" != "" ]; then
+            STATE=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].State.Name' --output text)
+            PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+            echo "state=$STATE" >> $GITHUB_OUTPUT
+            echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+            echo "✅ Lab server found: $INSTANCE_ID ($STATE) - IP: $PUBLIC_IP"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "❌ No lab server found"
+          fi
+
+      - name: Show Status
+        if: inputs.action == 'status'
+        run: |
+          if [ "${{ steps.check.outputs.exists }}" = "true" ]; then
+            echo "═══════════════════════════════════════════"
+            echo "  Lab Server Status"
+            echo "═══════════════════════════════════════════"
+            echo "  Instance ID: ${{ steps.check.outputs.instance_id }}"
+            echo "  State:       ${{ steps.check.outputs.state }}"
+            echo "  Public IP:   ${{ steps.check.outputs.public_ip }}"
+            echo "═══════════════════════════════════════════"
+          else
+            echo "No lab server exists. Run with action=create to set one up."
+          fi
+
+      # ─── DESTROY ───────────────────────────────────────
+      - name: Destroy Server
+        if: inputs.action == 'destroy' && steps.check.outputs.exists == 'true'
+        run: |
+          aws ec2 terminate-instances --instance-ids ${{ steps.check.outputs.instance_id }}
+          echo "🗑️ Lab server terminated: ${{ steps.check.outputs.instance_id }}"
+
+      # ─── CREATE ────────────────────────────────────────
+      - name: Create Security Group
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        id: sg
+        run: |
+          # Check if SG exists
+          SG_ID=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=devops-duoo-lab-sg" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text 2>/dev/null || echo "None")
+
+          if [ "$SG_ID" = "None" ] || [ -z "$SG_ID" ]; then
+            SG_ID=$(aws ec2 create-security-group \
+              --group-name devops-duoo-lab-sg \
+              --description "Security group for DevOps Duoo lab sessions" \
+              --query 'GroupId' \
+              --output text)
+
+            # Allow SSH (for SSM fallback)
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
+
+            # Allow ttyd web terminal (ports 7681-7690 for up to 10 concurrent sessions)
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 7681-7690 --cidr 0.0.0.0/0
+
+            echo "✅ Security group created: $SG_ID"
+          else
+            echo "✅ Security group exists: $SG_ID"
+          fi
+
+          echo "sg_id=$SG_ID" >> $GITHUB_OUTPUT
+
+      - name: Get Amazon Linux 2023 AMI
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        id: ami
+        run: |
+          AMI_ID=$(aws ec2 describe-images \
+            --owners amazon \
+            --filters "Name=name,Values=al2023-ami-2023*-x86_64" "Name=state,Values=available" \
+            --query 'sort_by(Images, &CreationDate)[-1].ImageId' \
+            --output text)
+
+          echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
+          echo "✅ Using AMI: $AMI_ID"
+
+      - name: Create IAM Role for SSM
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        id: iam
+        run: |
+          # Check if role exists
+          ROLE_EXISTS=$(aws iam get-role --role-name DevOpsDuooLabRole --query 'Role.RoleName' --output text 2>/dev/null || echo "None")
+
+          if [ "$ROLE_EXISTS" = "None" ]; then
+            # Create trust policy
+            cat > trust-policy.json << 'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": { "Service": "ec2.amazonaws.com" },
+                "Action": "sts:AssumeRole"
+              }
+            ]
+          }
+          EOF
+
+            aws iam create-role --role-name DevOpsDuooLabRole --assume-role-policy-document file://trust-policy.json
+            aws iam attach-role-policy --role-name DevOpsDuooLabRole --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+            # Allow the instance to stop itself (for auto-idle-shutdown)
+            cat > ec2-self-stop-policy.json << 'POLICY'
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "ec2:StopInstances",
+                  "ec2:DescribeInstances"
+                ],
+                "Resource": "*",
+                "Condition": {
+                  "StringEquals": {
+                    "ec2:ResourceTag/Project": "DevOpsDuoo"
+                  }
+                }
+              }
+            ]
+          }
+          POLICY
+            aws iam put-role-policy \
+              --role-name DevOpsDuooLabRole \
+              --policy-name DevOpsDuooSelfStop \
+              --policy-document file://ec2-self-stop-policy.json
+
+            echo "✅ IAM role created (with SSM + self-stop permissions)"
+          else
+            echo "✅ IAM role exists"
+          fi
+
+          # Check if instance profile exists
+          PROFILE_EXISTS=$(aws iam get-instance-profile --instance-profile-name DevOpsDuooLabProfile --query 'InstanceProfile.InstanceProfileName' --output text 2>/dev/null || echo "None")
+
+          if [ "$PROFILE_EXISTS" = "None" ]; then
+            aws iam create-instance-profile --instance-profile-name DevOpsDuooLabProfile
+            aws iam add-role-to-instance-profile --instance-profile-name DevOpsDuooLabProfile --role-name DevOpsDuooLabRole
+            sleep 10  # Wait for profile propagation
+            echo "✅ Instance profile created"
+          else
+            echo "✅ Instance profile exists"
+          fi
+
+      - name: Launch EC2 Instance
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        id: launch
+        run: |
+          # User data script to install Docker + auto-idle-shutdown
+          cat > user-data.sh << 'USERDATA'
+          #!/bin/bash
+          set -e
+
+          # Update system
+          dnf update -y
+
+          # Install Docker & AWS CLI
+          dnf install -y docker aws-cli jq
+          systemctl enable docker
+          systemctl start docker
+
+          # Add ec2-user to docker group
+          usermod -aG docker ec2-user
+
+          # Install Docker Compose
+          curl -Lo /usr/local/bin/docker-compose \
+            "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64"
+          chmod +x /usr/local/bin/docker-compose
+
+          # Create lab directory
+          mkdir -p /opt/devops-duoo-labs
+
+          # ────────────────────────────────────────────
+          # Auto-Idle Shutdown Script
+          # Stops the EC2 instance if no lab containers
+          # have been running for over 1 hour
+          # ────────────────────────────────────────────
+          cat > /opt/devops-duoo-labs/idle-shutdown.sh << 'IDLE_SCRIPT'
+          #!/bin/bash
+          IDLE_FILE="/opt/devops-duoo-labs/.last-active"
+          IDLE_THRESHOLD_SECONDS=3600  # 1 hour
+
+          # Count running lab containers
+          LAB_CONTAINERS=$(docker ps --filter "name=lab-" --format "{{.Names}}" 2>/dev/null | wc -l)
+
+          if [ "$LAB_CONTAINERS" -gt 0 ]; then
+            # Active sessions found — reset idle timer
+            date +%s > "$IDLE_FILE"
+            echo "[idle-monitor] $(date): $LAB_CONTAINERS active session(s), timer reset"
+          else
+            # No active sessions
+            if [ ! -f "$IDLE_FILE" ]; then
+              # First time seeing idle — start the timer
+              date +%s > "$IDLE_FILE"
+              echo "[idle-monitor] $(date): No sessions, starting idle timer"
+            else
+              LAST_ACTIVE=$(cat "$IDLE_FILE")
+              NOW=$(date +%s)
+              IDLE_SECONDS=$((NOW - LAST_ACTIVE))
+
+              echo "[idle-monitor] $(date): No sessions, idle for ${IDLE_SECONDS}s / ${IDLE_THRESHOLD_SECONDS}s"
+
+              if [ "$IDLE_SECONDS" -ge "$IDLE_THRESHOLD_SECONDS" ]; then
+                echo "[idle-monitor] $(date): 🛑 Idle threshold reached. Stopping instance..."
+
+                # Clean up any stopped containers and dangling images
+                docker container prune -f 2>/dev/null || true
+                docker image prune -f 2>/dev/null || true
+
+                # Stop the instance (not terminate — it can be restarted)
+                # IMDSv2: get token first, then use it for metadata requests
+                IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+                INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+                REGION=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/placement/region)
+                aws ec2 stop-instances --instance-ids "$INSTANCE_ID" --region "$REGION"
+              fi
+            fi
+          fi
+          IDLE_SCRIPT
+
+          chmod +x /opt/devops-duoo-labs/idle-shutdown.sh
+
+          # Run idle check every 10 minutes via cron
+          echo "*/10 * * * * root /opt/devops-duoo-labs/idle-shutdown.sh >> /var/log/idle-monitor.log 2>&1" > /etc/cron.d/lab-idle-monitor
+          chmod 644 /etc/cron.d/lab-idle-monitor
+
+          # Initialize idle timer (server just started = active)
+          date +%s > /opt/devops-duoo-labs/.last-active
+
+          # Tag setup as complete
+          touch /opt/devops-duoo-labs/.setup-complete
+
+          echo "✅ Lab server setup complete (with auto-idle-shutdown)!"
+          USERDATA
+
+          INSTANCE_ID=$(aws ec2 run-instances \
+            --image-id ${{ steps.ami.outputs.ami_id }} \
+            --instance-type ${{ env.INSTANCE_TYPE }} \
+            --security-group-ids ${{ steps.sg.outputs.sg_id }} \
+            --iam-instance-profile Name=DevOpsDuooLabProfile \
+            --user-data file://user-data.sh \
+            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.SERVER_NAME }}},{Key=Project,Value=DevOpsDuoo},{Key=Purpose,Value=LabServer}]" \
+            --metadata-options "HttpTokens=required,HttpEndpoint=enabled" \
+            --query 'Instances[0].InstanceId' \
+            --output text)
+
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          echo "🚀 EC2 instance launched: $INSTANCE_ID"
+
+      - name: Wait for Instance to be Running
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        run: |
+          echo "⏳ Waiting for instance to start..."
+          aws ec2 wait instance-running --instance-ids ${{ steps.launch.outputs.instance_id }}
+
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids ${{ steps.launch.outputs.instance_id }} \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+
+          echo "═══════════════════════════════════════════"
+          echo "  🎉 Lab Server Created Successfully!"
+          echo "═══════════════════════════════════════════"
+          echo "  Instance ID: ${{ steps.launch.outputs.instance_id }}"
+          echo "  Public IP:   $PUBLIC_IP"
+          echo "  Instance:    ${{ env.INSTANCE_TYPE }} (Free Tier)"
+          echo ""
+          echo "  ⏳ Docker is being installed (2-3 min)."
+          echo "     The server will be ready shortly."
+          echo "═══════════════════════════════════════════"
+          echo ""
+          echo "  💡 Add these GitHub Secrets:"
+          echo "     LAB_SERVER_INSTANCE_ID = ${{ steps.launch.outputs.instance_id }}"
+          echo "═══════════════════════════════════════════"

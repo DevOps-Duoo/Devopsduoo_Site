@@ -819,6 +819,136 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─────────── Hands-On Labs Section ─────────── */}
+      <section className="py-16 sm:py-20 md:py-24 relative overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 via-transparent to-gray-50/50 dark:from-gray-800/20 dark:via-transparent dark:to-gray-800/20" />
+        <div
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.04]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(51,153,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(51,153,255,0.3) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left: Terminal Preview */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="order-2 lg:order-1"
+            >
+              <div className="rounded-2xl overflow-hidden border border-gray-700/50 bg-[#0a0e1a] shadow-2xl shadow-primary-500/10">
+                {/* Terminal header */}
+                <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-700/50">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                  </div>
+                  <span className="text-xs text-gray-500 ml-2 font-mono">devops-duoo-lab</span>
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider">Live</span>
+                  </div>
+                </div>
+
+                {/* Terminal body */}
+                <div className="p-5 font-mono text-sm leading-relaxed space-y-1">
+                  <div className="text-gray-400">
+                    <span className="text-cyan-400">$ </span>
+                    <span className="text-gray-200">docker run -d --name nginx -p 8080:80 nginx:alpine</span>
+                  </div>
+                  <div className="text-emerald-400">  ✓ Container started: a3f2b1c9e4...</div>
+                  <div className="h-2" />
+                  <div className="text-gray-400">
+                    <span className="text-cyan-400">$ </span>
+                    <span className="text-gray-200">kubectl apply -f deployment.yaml</span>
+                  </div>
+                  <div className="text-emerald-400">  deployment.apps/my-app created</div>
+                  <div className="text-emerald-400">  service/my-app-svc created</div>
+                  <div className="h-2" />
+                  <div className="text-gray-400">
+                    <span className="text-cyan-400">$ </span>
+                    <span className="text-gray-200">terraform plan</span>
+                  </div>
+                  <div className="text-gray-400">  Plan: <span className="text-emerald-400">3 to add</span>, 0 to change, 0 to destroy.</div>
+                  <div className="h-2" />
+                  <div className="text-gray-400">
+                    <span className="text-cyan-400">$ </span>
+                    <motion.span
+                      className="text-cyan-400"
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ duration: 0.8, repeat: Infinity }}
+                    >
+                      █
+                    </motion.span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right: Content */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="order-1 lg:order-2"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700/50 mb-6">
+                <span className="text-sm">🧪</span>
+                <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Free Hands-On Labs</span>
+                <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white">New</span>
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
+                Learn DevOps by{' '}
+                <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
+                  Actually Doing It
+                </span>
+              </h2>
+
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+                Get real AWS environments to practice Docker, Kubernetes, Terraform, and more. No setup, no credit card, no risk — just 30 minutes of pure hands-on learning.
+              </p>
+
+              {/* Feature list */}
+              <div className="grid sm:grid-cols-2 gap-4 mb-8">
+                {[
+                  { icon: '🐳', text: 'Docker & Compose' },
+                  { icon: '☸️', text: 'Kubernetes & Helm' },
+                  { icon: '🏗️', text: 'Terraform IaC' },
+                  { icon: '🔄', text: 'CI/CD Pipelines' },
+                  { icon: '📊', text: 'Prometheus & Grafana' },
+                  { icon: '⚙️', text: 'Ansible Automation' },
+                ].map((item) => (
+                  <div key={item.text} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="font-medium">{item.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link href="/labs">
+                <motion.button
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/25"
+                  whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(16,185,129,0.3)' }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span>Explore Labs</span>
+                  <motion.span animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>→</motion.span>
+                </motion.button>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section with Animated Counters */}
       <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-primary-600 to-accent-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

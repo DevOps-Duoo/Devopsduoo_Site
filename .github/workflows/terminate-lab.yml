@@ -1,0 +1,57 @@
+name: Terminate Lab Session
+
+on:
+  workflow_dispatch:
+    inputs:
+      session_id:
+        description: 'Session ID to terminate'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: ap-south-1
+  SERVER_NAME: devops-duoo-lab-server
+
+jobs:
+  terminate:
+    name: Terminate - ${{ inputs.session_id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Find Lab Server
+        id: server
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=${{ env.SERVER_NAME }}" "Name=instance-state-name,Values=running" \
+            --query 'Reservations[0].Instances[0].InstanceId' \
+            --output text 2>/dev/null)
+
+          if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
+            echo "❌ Lab server not found"
+            exit 1
+          fi
+
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+
+      - name: Stop & Remove Container
+        run: |
+          INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
+          SESSION_ID="${{ inputs.session_id }}"
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids $INSTANCE_ID \
+            --document-name "AWS-RunShellScript" \
+            --parameters "commands=[\"docker stop lab-${SESSION_ID} 2>/dev/null || true && docker rm lab-${SESSION_ID} 2>/dev/null || true && echo 'Session ${SESSION_ID} terminated'\"]" \
+            --query 'Command.CommandId' \
+            --output text)
+
+          sleep 5
+          echo "✅ Session $SESSION_ID terminated"
