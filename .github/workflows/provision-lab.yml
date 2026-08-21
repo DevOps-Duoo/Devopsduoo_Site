@@ -46,7 +46,11 @@ jobs:
       - name: Pipeline Summary
         run: |
           echo "## 🚀 Lab Provisioning Started" >> $GITHUB_STEP_SUMMARY
-          echo "**User**: \`${{ inputs.user_name || 'Anonymous' }}\` started a lab on the frontend." >> $GITHUB_STEP_SUMMARY
+          if [ -z "${{ inputs.user_name }}" ]; then
+            echo "**User**: \`Anonymous\` started a lab on the frontend." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**User**: \`${{ inputs.user_name }}\` started a lab on the frontend." >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Session ID**: \`${{ inputs.session_id }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Lab ID**: \`${{ inputs.lab_id }}\`" >> $GITHUB_STEP_SUMMARY
