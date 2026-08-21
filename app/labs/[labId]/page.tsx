@@ -199,7 +199,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   }, []);
 
   // Start lab session
-  const startLab = useCallback(async () => {
+  async function startLab() {
     if (!lab) return;
     setIsStarting(true);
     setSessionStatus('provisioning');
@@ -225,10 +225,10 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
       // API not available - simulate for demo
       simulateProvisioning();
     }
-  }, [lab]);
+  }
 
   // Poll for session status
-  const pollStatus = async (sid: string) => {
+  async function pollStatus(sid: string) {
     const interval = setInterval(async () => {
       try {
         const response = await fetch(`/api/labs/status?sessionId=${sid}`);
@@ -261,7 +261,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   };
 
   // Simulate provisioning for demo
-  const simulateProvisioning = () => {
+  function simulateProvisioning() {
     setTimeout(() => {
       setSessionStatus('ready');
       setExpiresAt(new Date(Date.now() + 30 * 60 * 1000).toISOString());
@@ -274,7 +274,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   };
 
   // Terminate session
-  const terminateSession = async () => {
+  async function terminateSession() {
     setSessionStatus('terminating');
 
     if (sessionId) {
