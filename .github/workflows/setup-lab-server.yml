@@ -325,7 +325,7 @@ jobs:
               ssl_session_timeout 1d;
 
               add_header Strict-Transport-Security "max-age=63072000" always;
-              add_header Content-Security-Policy "frame-ancestors https://*.devopsduoo.in https://devopsduoo.in https://*.devopsduoo.com https://devopsduoo.com" always;
+              add_header Content-Security-Policy "frame-ancestors http://localhost:* http://127.0.0.1:* https://*.devopsduoo.in https://devopsduoo.in https://*.devopsduoo.com https://devopsduoo.com" always;
               add_header X-Content-Type-Options "nosniff" always;
 
               location ~ ^/s/([^/]+)/(.*) {
