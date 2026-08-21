@@ -215,8 +215,8 @@ jobs:
           # Update system
           dnf update -y
 
-          # Install Docker, AWS CLI, Nginx & Certbot
-          dnf install -y docker aws-cli jq nginx python3-pip
+          # Install Docker, AWS CLI, Nginx, Certbot & Cronie
+          dnf install -y docker aws-cli jq nginx python3-pip cronie
           pip3 install certbot certbot-nginx
           systemctl enable docker
           systemctl start docker
