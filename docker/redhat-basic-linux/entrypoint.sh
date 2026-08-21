@@ -30,5 +30,5 @@ exec ttyd \
     --port 7681 \
     --ping-interval 30 \
     --max-clients 1 \
-    --title "DevOps Duoo - Linux Lab" \
+    --client-option titleFixed="DevOps Duoo - Linux Lab" \
     su - labuser
