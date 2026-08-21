@@ -24,6 +24,8 @@ env:
   INSTANCE_TYPE: t2.micro
   SERVER_NAME: devops-duoo-lab-server
   KEY_NAME: devops-duoo-labs-key
+  LAB_DOMAIN: lab.devopsduoo.in
+  CERTBOT_EMAIL: hello@devopsduoo.com
 
 jobs:
   setup:
@@ -106,6 +108,12 @@ jobs:
 
             # Allow ttyd web terminal (ports 7681-7690 for up to 10 concurrent sessions)
             aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 7681-7690 --cidr 0.0.0.0/0
+
+            # Allow HTTP (for Let's Encrypt ACME challenge)
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+            # Allow HTTPS (for Nginx SSL reverse proxy)
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 443 --cidr 0.0.0.0/0
 
             echo "✅ Security group created: $SG_ID"
           else
@@ -207,8 +215,9 @@ jobs:
           # Update system
           dnf update -y
 
-          # Install Docker & AWS CLI
-          dnf install -y docker aws-cli jq
+          # Install Docker, AWS CLI, Nginx & Certbot
+          dnf install -y docker aws-cli jq nginx python3-pip
+          pip3 install certbot certbot-nginx
           systemctl enable docker
           systemctl start docker
 
@@ -280,10 +289,49 @@ jobs:
           # Initialize idle timer (server just started = active)
           date +%s > /opt/devops-duoo-labs/.last-active
 
+          # ────────────────────────────────────────────
+          # Initialize Nginx port map for lab sessions
+          # ────────────────────────────────────────────
+          mkdir -p /var/www/certbot
+          cat > /etc/nginx/lab-ports.map << 'PORTMAP'
+          map $session_id $backend_port {
+              default 0;
+          }
+          PORTMAP
+
+          # Create helper script: add session to port map
+          cat > /usr/local/bin/lab-add-session << 'ADDSCRIPT'
+          #!/bin/bash
+          SESSION_ID="$1"
+          PORT="$2"
+          if [ -z "$SESSION_ID" ] || [ -z "$PORT" ]; then
+              echo "Usage: lab-add-session <session-id> <port>"
+              exit 1
+          fi
+          sed -i "/^}$/i\\    $SESSION_ID $PORT;" /etc/nginx/lab-ports.map
+          nginx -s reload 2>/dev/null || true
+          echo "Added session $SESSION_ID -> port $PORT"
+          ADDSCRIPT
+          chmod +x /usr/local/bin/lab-add-session
+
+          # Create helper script: remove session from port map
+          cat > /usr/local/bin/lab-remove-session << 'RMSCRIPT'
+          #!/bin/bash
+          SESSION_ID="$1"
+          if [ -z "$SESSION_ID" ]; then
+              echo "Usage: lab-remove-session <session-id>"
+              exit 1
+          fi
+          sed -i "/$SESSION_ID/d" /etc/nginx/lab-ports.map
+          nginx -s reload 2>/dev/null || true
+          echo "Removed session $SESSION_ID"
+          RMSCRIPT
+          chmod +x /usr/local/bin/lab-remove-session
+
           # Tag setup as complete
           touch /opt/devops-duoo-labs/.setup-complete
 
-          echo "✅ Lab server setup complete (with auto-idle-shutdown)!"
+          echo "✅ Lab server setup complete (with auto-idle-shutdown + Nginx)!"
           USERDATA
 
           INSTANCE_ID=$(aws ec2 run-instances \
@@ -305,23 +353,139 @@ jobs:
         run: |
           echo "⏳ Waiting for instance to start..."
           aws ec2 wait instance-running --instance-ids ${{ steps.launch.outputs.instance_id }}
+          echo "✅ Instance is running"
 
-          PUBLIC_IP=$(aws ec2 describe-instances \
-            --instance-ids ${{ steps.launch.outputs.instance_id }} \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+      # ─── Allocate Elastic IP ──────────────────────────
+      - name: Allocate Elastic IP
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        id: eip
+        run: |
+          INSTANCE_ID="${{ steps.launch.outputs.instance_id }}"
+
+          # Check if an EIP is already tagged for this project
+          EXISTING_ALLOC=$(aws ec2 describe-addresses \
+            --filters "Name=tag:Project,Values=DevOpsDuoo" \
+            --query 'Addresses[0].AllocationId' \
+            --output text 2>/dev/null || echo "None")
+
+          if [ "$EXISTING_ALLOC" != "None" ] && [ -n "$EXISTING_ALLOC" ]; then
+            ALLOC_ID="$EXISTING_ALLOC"
+            echo "✅ Reusing existing Elastic IP: $ALLOC_ID"
+          else
+            # Allocate a new Elastic IP
+            ALLOC_ID=$(aws ec2 allocate-address \
+              --domain vpc \
+              --tag-specifications "ResourceType=elastic-ip,Tags=[{Key=Name,Value=devops-duoo-lab-eip},{Key=Project,Value=DevOpsDuoo}]" \
+              --query 'AllocationId' \
+              --output text)
+            echo "✅ Allocated new Elastic IP: $ALLOC_ID"
+          fi
+
+          # Associate with the instance
+          aws ec2 associate-address \
+            --instance-id "$INSTANCE_ID" \
+            --allocation-id "$ALLOC_ID"
+
+          # Get the public IP
+          PUBLIC_IP=$(aws ec2 describe-addresses \
+            --allocation-ids "$ALLOC_ID" \
+            --query 'Addresses[0].PublicIp' \
             --output text)
 
+          echo "elastic_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          echo "alloc_id=$ALLOC_ID" >> $GITHUB_OUTPUT
+          echo "✅ Elastic IP $PUBLIC_IP associated with $INSTANCE_ID"
+
+      # ─── Setup Nginx + SSL (via SSM after user-data completes) ────
+      - name: Setup Nginx SSL
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        run: |
+          INSTANCE_ID="${{ steps.launch.outputs.instance_id }}"
+          LAB_DOMAIN="${{ env.LAB_DOMAIN }}"
+          EMAIL="${{ env.CERTBOT_EMAIL }}"
+
+          echo "⏳ Waiting for user-data to complete (Nginx install)..."
+          # Wait for the setup-complete flag from user-data
+          for i in $(seq 1 40); do
+            COMMAND_ID=$(aws ssm send-command \
+              --instance-ids "$INSTANCE_ID" \
+              --document-name "AWS-RunShellScript" \
+              --parameters '{"commands":["test -f /opt/devops-duoo-labs/.setup-complete && echo READY || echo WAITING"]}' \
+              --query 'Command.CommandId' \
+              --output text 2>/dev/null || echo "")
+
+            if [ -z "$COMMAND_ID" ]; then
+              echo "  SSM not ready yet, waiting..."
+              sleep 15
+              continue
+            fi
+
+            sleep 5
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query 'StandardOutputContent' \
+              --output text 2>/dev/null || echo "WAITING")
+
+            if echo "$STATUS" | grep -q "READY"; then
+              echo "✅ User-data complete, server is ready"
+              break
+            fi
+
+            echo "  Still waiting... ($i/40)"
+            sleep 15
+          done
+
+          echo "🔒 Setting up SSL certificate for $LAB_DOMAIN..."
+          echo "   ⚠️  Make sure DNS A record points $LAB_DOMAIN → ${{ steps.eip.outputs.elastic_ip }}"
+
+          # Run certbot via SSM
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --timeout-seconds 120 \
+            --parameters "{\"commands\":[\"mkdir -p /var/www/certbot && systemctl enable nginx && systemctl start nginx && certbot certonly --webroot --webroot-path /var/www/certbot --domain $LAB_DOMAIN --email $EMAIL --agree-tos --non-interactive && nginx -t && systemctl reload nginx && echo 'SSL_SETUP_COMPLETE' || echo 'SSL_SETUP_FAILED'\"]}" \
+            --query 'Command.CommandId' \
+            --output text)
+
+          sleep 30
+
+          SSL_RESULT=$(aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query 'StandardOutputContent' \
+            --output text 2>/dev/null || echo "UNKNOWN")
+
+          if echo "$SSL_RESULT" | grep -q "SSL_SETUP_COMPLETE"; then
+            echo "✅ SSL setup complete!"
+          else
+            echo "⚠️ SSL setup may need manual attention."
+            echo "   Run on EC2: sudo bash /opt/devops-duoo-labs/setup-nginx-ssl.sh $LAB_DOMAIN $EMAIL"
+            echo "   Make sure DNS is pointing $LAB_DOMAIN → ${{ steps.eip.outputs.elastic_ip }}"
+          fi
+
+          # Set up auto-renewal cron
+          aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters '{"commands":["echo \"0 3 * * * root certbot renew --quiet --deploy-hook systemctl reload nginx\" > /etc/cron.d/certbot-renew && chmod 644 /etc/cron.d/certbot-renew"]}' \
+            --output text > /dev/null 2>&1 || true
+
+      - name: Output Summary
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        run: |
           echo "═══════════════════════════════════════════"
           echo "  🎉 Lab Server Created Successfully!"
           echo "═══════════════════════════════════════════"
           echo "  Instance ID: ${{ steps.launch.outputs.instance_id }}"
-          echo "  Public IP:   $PUBLIC_IP"
+          echo "  Elastic IP:  ${{ steps.eip.outputs.elastic_ip }}"
+          echo "  Domain:      https://${{ env.LAB_DOMAIN }}"
           echo "  Instance:    ${{ env.INSTANCE_TYPE }} (Free Tier)"
           echo ""
-          echo "  ⏳ Docker is being installed (2-3 min)."
-          echo "     The server will be ready shortly."
-          echo "═══════════════════════════════════════════"
+          echo "  📋 DNS Setup Required:"
+          echo "     Add A record: ${{ env.LAB_DOMAIN }} → ${{ steps.eip.outputs.elastic_ip }}"
           echo ""
-          echo "  💡 Add these GitHub Secrets:"
+          echo "  💡 Add these GitHub Secrets / Env Vars:"
           echo "     LAB_SERVER_INSTANCE_ID = ${{ steps.launch.outputs.instance_id }}"
+          echo "     LAB_DOMAIN = ${{ env.LAB_DOMAIN }}"
           echo "═══════════════════════════════════════════"

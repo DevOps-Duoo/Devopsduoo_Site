@@ -90,12 +90,15 @@ export async function GET(request: NextRequest) {
     const portMatch = output.match(/:(\d+)->/);
 
     if (invocationRes.Status === 'Success' && portMatch && portMatch[1]) {
-      const port = portMatch[1];
+      const labDomain = process.env.LAB_DOMAIN || 'lab.devopsduoo.in';
+      
+      // Use HTTPS via Nginx reverse proxy with session-based routing
+      const terminalUrl = `https://${labDomain}/s/${sessionId}/`;
       
       return NextResponse.json({
         sessionId,
         status: 'ready',
-        terminalUrl: `http://${publicIp}:${port}`,
+        terminalUrl,
         message: 'Lab is ready!',
         expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       });

@@ -246,42 +246,30 @@ export default function LabTerminal({ terminalUrl, isConnected, sessionStatus }:
       {/* Terminal Body */}
       <div className="relative min-h-[400px] lg:min-h-[500px] w-full" style={{ background: '#0a0e1a' }}>
         {isConnected && terminalUrl ? (
-          <div className="absolute inset-0 p-6 font-mono text-sm flex flex-col">
-            <div className="flex-1 border border-gray-700/50 rounded bg-[#0f172a] shadow-inner p-4 flex flex-col items-center justify-center text-center space-y-6 relative overflow-hidden">
-              {/* Scanline effect */}
-              <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-10 opacity-20" />
-              
-              <div className="text-emerald-400 mb-2">
-                <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              
-              <div className="space-y-1">
-                <p className="text-emerald-400 font-bold tracking-widest uppercase">Environment Ready</p>
-                <p className="text-gray-400 text-xs">AWS EC2 Instance: devops-duoo-lab-server</p>
-              </div>
-
-              <div className="max-w-md mx-auto bg-gray-900/80 border border-gray-700 p-4 rounded text-left shadow-lg">
-                <p className="text-gray-300 text-xs leading-relaxed">
-                  <span className="text-amber-400 mr-2">ℹ️</span>
-                  To comply with browser security policies (Mixed Content), the live AWS terminal must be launched in a new secure window.
-                </p>
-              </div>
-              
-              <a 
+          <div className="absolute inset-0 flex flex-col">
+            {/* Embedded terminal via iframe */}
+            <iframe
+              src={terminalUrl}
+              className="flex-1 w-full border-0 rounded-b-xl"
+              style={{ background: '#0a0e1a', minHeight: '100%' }}
+              allow="clipboard-read; clipboard-write"
+              title="DevOps Duoo Lab Terminal"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            />
+            
+            {/* Fallback: open in new tab if iframe fails */}
+            <div className="absolute bottom-3 right-3 z-10">
+              <a
                 href={terminalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex items-center justify-center px-8 py-3 font-bold text-gray-900 bg-emerald-400 rounded hover:bg-emerald-300 transition-all z-20 overflow-hidden"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium text-gray-400 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-lg backdrop-blur-sm transition-colors"
+                title="Open terminal in new tab"
               >
-                <span className="absolute inset-0 w-full h-full -mt-1 rounded opacity-30 bg-gradient-to-b from-transparent via-transparent to-black" />
-                <span className="relative flex items-center gap-2">
-                  Launch Secure Terminal
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </span>
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Pop Out
               </a>
             </div>
           </div>
