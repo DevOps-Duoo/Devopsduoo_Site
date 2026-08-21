@@ -95,6 +95,21 @@ export async function GET(request: NextRequest) {
       // Use HTTPS via Nginx reverse proxy with session-based routing
       const terminalUrl = `https://${labDomain}/s/${sessionId}/`;
       
+      // Verify Nginx has actually reloaded and mapped the route
+      try {
+        const checkRes = await fetch(terminalUrl, { method: 'HEAD' });
+        if (!checkRes.ok && checkRes.status === 404) {
+          // Nginx hasn't reloaded the lab-ports.map yet
+          return NextResponse.json({
+            sessionId,
+            status: 'provisioning',
+            message: 'Waiting for reverse proxy mapping...'
+          });
+        }
+      } catch (err) {
+        // Ignore network errors here, just wait
+      }
+      
       return NextResponse.json({
         sessionId,
         status: 'ready',
