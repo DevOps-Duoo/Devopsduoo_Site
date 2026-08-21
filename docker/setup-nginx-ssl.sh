@@ -96,6 +96,8 @@ server {
 
         proxy_pass http://127.0.0.1:\\\$backend_port/\\\$remaining_path\\\$is_args\\\$args;
         proxy_http_version 1.1;
+        proxy_hide_header X-Frame-Options;
+        proxy_hide_header Content-Security-Policy;
         proxy_set_header Upgrade \\\$http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host \\\$host;
