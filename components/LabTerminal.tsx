@@ -254,7 +254,6 @@ export default function LabTerminal({ terminalUrl, isConnected, sessionStatus }:
               style={{ background: '#0a0e1a', minHeight: '100%' }}
               allow="clipboard-read; clipboard-write"
               title="DevOps Duoo Lab Terminal"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             />
             
             {/* Fallback: open in new tab if iframe fails */}
