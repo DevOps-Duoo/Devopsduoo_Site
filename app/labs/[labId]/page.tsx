@@ -21,6 +21,7 @@ import {
   FaSpinner,
 } from 'react-icons/fa';
 import { getLabById, difficultyConfig, type Lab, type SessionStatus } from '@/lib/labs';
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
 
 // Dynamic import for terminal (client-only, no SSR)
 const LabTerminal = dynamic(() => import('@/components/LabTerminal'), {
@@ -396,245 +397,249 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
       </div>
 
       {/* Main Content — Split Pane */}
-      <div className="pt-[8.5rem] pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row gap-6">
+      <div className="pt-[5.5rem] pb-0 h-screen">
+        <div className="w-full h-full p-4 lg:p-6 pb-6">
+          <PanelGroup orientation="horizontal" className="w-full h-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50 shadow-2xl bg-white dark:bg-gray-800/50">
             {/* ─────── LEFT: Instructions ─────── */}
-            <AnimatePresence>
-              {showInstructions && (
-                <motion.div
-                  className="w-full lg:w-[400px] xl:w-[450px] flex-shrink-0"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                >
-                  <div className="sticky top-[9rem] space-y-4 max-h-[calc(100vh-10rem)] overflow-y-auto pr-2 scrollbar-thin">
-                    {/* Lab overview card */}
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/50 p-6">
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                        {lab.title}
-                      </h2>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        {lab.fullDescription.split('\n')[0]}
-                      </p>
+            <Panel defaultSize={35} minSize={20} className="relative">
+              <div className="absolute inset-0 overflow-y-auto p-6 scrollbar-thin">
+                <AnimatePresence>
+                  {showInstructions && (
+                    <motion.div
+                      className="space-y-6"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      {/* Lab overview card */}
+                      <div className="rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/50 p-6">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                          {lab.title}
+                        </h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                          {lab.fullDescription.split('\n')[0]}
+                        </p>
 
-                      {/* Meta */}
-                      <div className="flex flex-wrap gap-3 mb-4">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <FaClock />
-                          <span>{lab.estimatedMinutes} min</span>
+                        {/* Meta */}
+                        <div className="flex flex-wrap gap-3 mb-4">
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <FaClock />
+                            <span>{lab.estimatedMinutes} min</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <FaGraduationCap />
+                            <span>{lab.steps.length} steps</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <FaGraduationCap />
-                          <span>{lab.steps.length} steps</span>
+
+                        {/* Learning objectives */}
+                        <div className="border-t border-gray-100 dark:border-gray-700/50 pt-4">
+                          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            Learning Objectives
+                          </h4>
+                          <ul className="space-y-1.5">
+                            {lab.learningObjectives.map((obj, i) => (
+                              <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                <FaCheckCircle className="text-emerald-500 text-xs mt-1 flex-shrink-0" />
+                                <span>{obj}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
 
-                      {/* Learning objectives */}
-                      <div className="border-t border-gray-100 dark:border-gray-700/50 pt-4">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                          Learning Objectives
-                        </h4>
-                        <ul className="space-y-1.5">
-                          {lab.learningObjectives.map((obj, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-                              <FaCheckCircle className="text-emerald-500 text-xs mt-1 flex-shrink-0" />
-                              <span>{obj}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
+                      {/* Steps */}
+                      <div className="rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/50 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
+                          <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <FaListOl className="text-primary-500" />
+                            Lab Steps
+                          </h3>
+                        </div>
 
-                    {/* Steps */}
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/50 overflow-hidden">
-                      <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                          <FaListOl className="text-primary-500" />
-                          Lab Steps
-                        </h3>
-                      </div>
-
-                      <div className="divide-y divide-gray-100 dark:divide-gray-700/30">
-                        {lab.steps.map((step, i) => (
-                          <motion.div
-                            key={i}
-                            className={`p-4 cursor-pointer transition-colors ${
-                              activeStep === i
-                                ? 'bg-primary-50/50 dark:bg-primary-900/10 border-l-2 border-primary-500'
-                                : 'hover:bg-gray-50 dark:hover:bg-gray-800/80 border-l-2 border-transparent'
-                            }`}
-                            onClick={() => setActiveStep(i)}
-                          >
-                            <div className="flex items-start gap-3">
-                              {/* Step number */}
-                              <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                                  activeStep === i
-                                    ? 'bg-primary-500 text-white'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                                }`}
-                              >
-                                {i + 1}
-                              </div>
-
-                              <div className="flex-1 min-w-0">
-                                <h4
-                                  className={`text-sm font-semibold mb-1 ${
+                        <div className="divide-y divide-gray-100 dark:divide-gray-700/30">
+                          {lab.steps.map((step, i) => (
+                            <motion.div
+                              key={i}
+                              className={`p-4 cursor-pointer transition-colors ${
+                                activeStep === i
+                                  ? 'bg-primary-50/50 dark:bg-primary-900/10 border-l-2 border-primary-500'
+                                  : 'hover:bg-gray-50 dark:hover:bg-gray-800/80 border-l-2 border-transparent'
+                              }`}
+                              onClick={() => setActiveStep(i)}
+                            >
+                              <div className="flex items-start gap-3">
+                                {/* Step number */}
+                                <div
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                                     activeStep === i
-                                      ? 'text-primary-700 dark:text-primary-300'
-                                      : 'text-gray-700 dark:text-gray-300'
+                                      ? 'bg-primary-500 text-white'
+                                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                                   }`}
                                 >
-                                  {step.title}
-                                </h4>
+                                  {i + 1}
+                                </div>
 
-                                {activeStep === i && (
-                                  <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    transition={{ duration: 0.2 }}
+                                <div className="flex-1 min-w-0">
+                                  <h4
+                                    className={`text-sm font-semibold mb-1 ${
+                                      activeStep === i
+                                        ? 'text-primary-700 dark:text-primary-300'
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    }`}
                                   >
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                                      {step.description}
-                                    </p>
+                                    {step.title}
+                                  </h4>
 
-                                    {step.command && (
-                                      <div className="rounded-lg bg-gray-900 dark:bg-[#0a0e1a] p-3 mb-2">
-                                        <div className="flex items-start justify-between gap-2">
-                                          <code className="text-xs text-emerald-400 font-mono break-all">
-                                            $ {step.command}
-                                          </code>
-                                          <CopyButton text={step.command} />
+                                  {activeStep === i && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                                        {step.description}
+                                      </p>
+
+                                      {step.command && (
+                                        <div className="rounded-lg bg-gray-900 dark:bg-[#0a0e1a] p-3 mb-2">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <code className="text-xs text-emerald-400 font-mono break-all">
+                                              $ {step.command}
+                                            </code>
+                                            <CopyButton text={step.command} />
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
 
-                                    {step.hint && (
-                                      <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 rounded-lg p-2 border border-amber-200 dark:border-amber-800/30">
-                                        <FaExclamationTriangle className="text-[10px] mt-0.5 flex-shrink-0" />
-                                        <span>{step.hint}</span>
-                                      </div>
-                                    )}
-                                  </motion.div>
-                                )}
+                                      {step.hint && (
+                                        <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 rounded-lg p-2 border border-amber-200 dark:border-amber-800/30">
+                                          <FaExclamationTriangle className="text-[10px] mt-0.5 flex-shrink-0" />
+                                          <span>{step.hint}</span>
+                                        </div>
+                                      )}
+                                    </motion.div>
+                                  )}
+                                </div>
+
+                                <FaChevronRight
+                                  className={`text-xs transition-transform flex-shrink-0 mt-1 ${
+                                    activeStep === i ? 'rotate-90 text-primary-500' : 'text-gray-300 dark:text-gray-600'
+                                  }`}
+                                />
                               </div>
-
-                              <FaChevronRight
-                                className={`text-xs transition-transform flex-shrink-0 mt-1 ${
-                                  activeStep === i ? 'rotate-90 text-primary-500' : 'text-gray-300 dark:text-gray-600'
-                                }`}
-                              />
-                            </div>
-                          </motion.div>
-                        ))}
+                            </motion.div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Nav buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        className="flex-1 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-30"
-                        disabled={activeStep === 0}
-                        onClick={() => setActiveStep((prev) => prev - 1)}
-                      >
-                        ← Previous
-                      </button>
-                      <button
-                        className="flex-1 py-2 text-sm font-medium rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors disabled:opacity-30"
-                        disabled={activeStep === lab.steps.length - 1}
-                        onClick={() => setActiveStep((prev) => prev + 1)}
-                      >
-                        Next →
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      {/* Nav buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-30"
+                          disabled={activeStep === 0}
+                          onClick={() => setActiveStep((prev) => prev - 1)}
+                        >
+                          ← Previous
+                        </button>
+                        <button
+                          className="flex-1 py-2 text-sm font-medium rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors disabled:opacity-30"
+                          disabled={activeStep === lab.steps.length - 1}
+                          onClick={() => setActiveStep((prev) => prev + 1)}
+                        >
+                          Next →
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </Panel>
+
+            <PanelResizeHandle className="w-2 bg-gray-100 dark:bg-gray-800 hover:bg-primary-500/50 dark:hover:bg-primary-500/50 transition-colors cursor-col-resize flex items-center justify-center flex-shrink-0">
+              <div className="w-1 h-8 bg-gray-300 dark:bg-gray-600 rounded-full" />
+            </PanelResizeHandle>
 
             {/* ─────── RIGHT: Terminal ─────── */}
-            <div className="flex-1 min-w-0">
-              <div className="sticky top-[9rem]">
-                <div className="relative">
-                  {/* Provisioning overlay */}
-                  <AnimatePresence>
-                    {isProvisioning && <ProvisioningOverlay />}
-                  </AnimatePresence>
+            <Panel defaultSize={65} minSize={30} className="bg-[#0a0e1a] relative">
+              <div className="absolute inset-0">
+                {/* Provisioning overlay */}
+                <AnimatePresence>
+                  {isProvisioning && <ProvisioningOverlay />}
+                </AnimatePresence>
 
-                  {/* Terminated overlay */}
-                  <AnimatePresence>
-                    {sessionStatus === 'terminated' && (
-                      <motion.div
-                        className="absolute inset-0 z-10 flex items-center justify-center bg-[#0a0e1a]/90 backdrop-blur-sm rounded-xl"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        <div className="text-center">
-                          <div className="text-5xl mb-4">⏱️</div>
-                          <h3 className="text-xl font-bold text-white mb-2">Session Ended</h3>
-                          <p className="text-gray-400 text-sm mb-6">
-                            Your lab environment has been terminated.
-                          </p>
-                          <motion.button
-                            className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl font-semibold"
-                            onClick={() => {
-                              setSessionStatus('queued');
-                              startLab();
-                            }}
-                            whileHover={{ scale: 1.05 }}
-                          >
-                            <FaRedo className="text-sm" />
-                            Start New Session
-                          </motion.button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Not started state */}
-                  {sessionStatus === 'queued' && !isStarting && (
-                    <div className="rounded-xl border border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/30 min-h-[400px] lg:min-h-[500px] flex items-center justify-center">
-                      <div className="text-center max-w-md px-6">
-                        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 border border-primary-500/20 flex items-center justify-center">
-                          <FaTerminal className="text-3xl text-primary-400" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                          Ready to Practice?
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                          Click &quot;Start Lab&quot; to provision a real AWS environment with all tools
-                          pre-installed. You&apos;ll get 30 minutes of free practice time.
+                {/* Terminated overlay */}
+                <AnimatePresence>
+                  {sessionStatus === 'terminated' && (
+                    <motion.div
+                      className="absolute inset-0 z-10 flex items-center justify-center bg-[#0a0e1a]/90 backdrop-blur-sm"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <div className="text-center">
+                        <div className="text-5xl mb-4">⏱️</div>
+                        <h3 className="text-xl font-bold text-white mb-2">Session Ended</h3>
+                        <p className="text-gray-400 text-sm mb-6">
+                          Your lab environment has been terminated.
                         </p>
                         <motion.button
-                          className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/25"
-                          onClick={startLab}
-                          whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(16,185,129,0.3)' }}
-                          whileTap={{ scale: 0.95 }}
+                          className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl font-semibold"
+                          onClick={() => {
+                            setSessionStatus('queued');
+                            startLab();
+                          }}
+                          whileHover={{ scale: 1.05 }}
                         >
-                          <FaPlay />
-                          Start Lab
+                          <FaRedo className="text-sm" />
+                          Start New Session
                         </motion.button>
-                        <p className="text-xs text-gray-500 mt-4">
-                          No sign-up required • Auto-terminates after 30 min
-                        </p>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
+                </AnimatePresence>
 
-                  {/* Active terminal */}
-                  {(isActive || isProvisioning) && (
-                    <LabTerminal
-                      terminalUrl={terminalUrl}
-                      isConnected={isActive}
-                      sessionStatus={sessionStatus}
-                    />
-                  )}
-                </div>
+                {/* Not started state */}
+                {sessionStatus === 'queued' && !isStarting && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#0a0e1a]">
+                    <div className="text-center max-w-md px-6">
+                      <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 border border-primary-500/20 flex items-center justify-center">
+                        <FaTerminal className="text-3xl text-primary-400" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-2">
+                        Ready to Practice?
+                      </h3>
+                      <p className="text-sm text-gray-400 mb-6">
+                        Click &quot;Start Lab&quot; to provision a real AWS environment with all tools
+                        pre-installed. You&apos;ll get 30 minutes of free practice time.
+                      </p>
+                      <motion.button
+                        className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/25"
+                        onClick={startLab}
+                        whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(16,185,129,0.3)' }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <FaPlay />
+                        Start Lab
+                      </motion.button>
+                      <p className="text-xs text-gray-500 mt-4">
+                        No sign-up required • Auto-terminates after 30 min
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Active terminal */}
+                {(isActive || isProvisioning) && (
+                  <LabTerminal
+                    terminalUrl={terminalUrl}
+                    isConnected={isActive}
+                    sessionStatus={sessionStatus}
+                  />
+                )}
               </div>
-            </div>
-          </div>
+            </Panel>
+          </PanelGroup>
         </div>
       </div>
     </div>

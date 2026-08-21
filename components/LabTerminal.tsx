@@ -210,48 +210,16 @@ export default function LabTerminal({ terminalUrl, isConnected, sessionStatus }:
   }, [initTerminal]);
 
   return (
-    <div className="relative rounded-xl overflow-hidden border border-gray-700/50 bg-[#0a0e1a] shadow-2xl">
-      {/* Terminal Header Bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-700/50">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-500 transition-colors cursor-pointer" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/80 hover:bg-yellow-500 transition-colors cursor-pointer" />
-            <div className="w-3 h-3 rounded-full bg-green-500/80 hover:bg-green-500 transition-colors cursor-pointer" />
-          </div>
-          <span className="text-xs text-gray-400 ml-2 font-mono">devops-duoo-lab</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Connection status indicator */}
-          <div className="flex items-center gap-1.5">
-            <div className={`w-2 h-2 rounded-full ${
-              sessionStatus === 'active' || sessionStatus === 'ready'
-                ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]'
-                : sessionStatus === 'provisioning'
-                ? 'bg-amber-400 animate-pulse'
-                : 'bg-gray-500'
-            }`} />
-            <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">
-              {sessionStatus === 'active' || sessionStatus === 'ready'
-                ? 'Connected'
-                : sessionStatus === 'provisioning'
-                ? 'Connecting...'
-                : 'Demo Mode'}
-            </span>
-          </div>
-        </div>
-      </div>
-
+    <div className="relative w-full h-full bg-[#0a0e1a]">
       {/* Terminal Body */}
-      <div className="relative min-h-[400px] lg:min-h-[500px] w-full" style={{ background: '#0a0e1a' }}>
+      <div className="relative w-full h-full" style={{ background: '#0a0e1a' }}>
         {isConnected && terminalUrl ? (
           <div className="absolute inset-0 flex flex-col">
             {/* Embedded terminal via iframe */}
             <iframe
               src={terminalUrl}
-              className="flex-1 w-full border-0 rounded-b-xl"
-              style={{ background: '#0a0e1a', minHeight: '100%' }}
+              className="flex-1 w-full h-full border-0"
+              style={{ background: '#0a0e1a' }}
               allow="clipboard-read; clipboard-write"
               title="DevOps Duoo Lab Terminal"
             />
