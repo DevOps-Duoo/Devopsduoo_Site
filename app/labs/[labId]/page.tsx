@@ -188,6 +188,14 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   const [showInstructions, setShowInstructions] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    handleResize(); // set initial value
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Start lab session
   const startLab = useCallback(async () => {
@@ -399,7 +407,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
       {/* Main Content — Split Pane */}
       <div className="pt-[5.5rem] pb-0 h-screen">
         <div className="w-full h-full p-4 lg:p-6 pb-6">
-          <PanelGroup orientation="horizontal" className="w-full h-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50 shadow-2xl bg-white dark:bg-gray-800/50">
+          <PanelGroup orientation={isMobile ? "vertical" : "horizontal"} className="w-full h-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50 shadow-2xl bg-white dark:bg-gray-800/50">
             {/* ─────── LEFT: Instructions ─────── */}
             <Panel defaultSize={35} minSize={20} className="relative">
               <div className="absolute inset-0 overflow-y-auto p-6 scrollbar-thin">
@@ -556,8 +564,8 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
               </div>
             </Panel>
 
-            <PanelResizeHandle className="w-2 bg-gray-100 dark:bg-gray-800 hover:bg-primary-500/50 dark:hover:bg-primary-500/50 transition-colors cursor-col-resize flex items-center justify-center flex-shrink-0">
-              <div className="w-1 h-8 bg-gray-300 dark:bg-gray-600 rounded-full" />
+            <PanelResizeHandle className={`${isMobile ? 'h-3 w-full cursor-row-resize' : 'w-2 h-full cursor-col-resize'} bg-gray-100 dark:bg-gray-800 hover:bg-primary-500/50 dark:hover:bg-primary-500/50 transition-colors flex items-center justify-center flex-shrink-0`}>
+              <div className={`${isMobile ? 'w-8 h-1' : 'w-1 h-8'} bg-gray-300 dark:bg-gray-600 rounded-full`} />
             </PanelResizeHandle>
 
             {/* ─────── RIGHT: Terminal ─────── */}
