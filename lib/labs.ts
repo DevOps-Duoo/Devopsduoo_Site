@@ -108,7 +108,7 @@ This lab is perfect for anyone starting their DevOps journey. A solid Linux foun
       {
         title: 'Explore the System',
         description: 'Check your Linux distribution, kernel version, and system information.',
-        command: 'cat /etc/redhat-release && uname -a && hostnamectl',
+        command: 'cat /etc/redhat-release && uname -a && hostname',
         hint: 'Red Hat-based systems use /etc/redhat-release for version info',
       },
       {
