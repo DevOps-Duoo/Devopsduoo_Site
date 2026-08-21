@@ -39,11 +39,11 @@ function generateSessionId(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { labId } = body;
+    const { labId, userName } = body;
 
-    if (!labId) {
+    if (!labId || !userName?.trim()) {
       return NextResponse.json(
-        { error: 'labId is required' },
+        { error: 'labId and userName are required' },
         { status: 400 }
       );
     }
@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
                 lab_id: labId,
                 docker_image: lab.dockerImage,
                 ttl_minutes: '30',
+                user_name: userName || 'Anonymous',
               },
             }),
           }

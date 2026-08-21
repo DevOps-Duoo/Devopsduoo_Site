@@ -25,6 +25,11 @@ on:
         required: false
         default: '30'
         type: string
+      user_name:
+        description: 'Name of the user starting the lab'
+        required: false
+        type: string
+
 
 env:
   AWS_REGION: ap-south-1
@@ -38,6 +43,16 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Pipeline Summary
+        run: |
+          echo "## 🚀 Lab Provisioning Started" >> $GITHUB_STEP_SUMMARY
+          echo "**User**: \`${{ inputs.user_name || 'Anonymous' }}\` started a lab on the frontend." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Session ID**: \`${{ inputs.session_id }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Lab ID**: \`${{ inputs.lab_id }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Image**: \`${{ inputs.docker_image }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**TTL**: \`${{ inputs.ttl_minutes }} minutes\`" >> $GITHUB_STEP_SUMMARY
+
       - name: Checkout repository
         uses: actions/checkout@v4
 

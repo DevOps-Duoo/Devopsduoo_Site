@@ -189,6 +189,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   const [isStarting, setIsStarting] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -207,7 +208,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
       const response = await fetch('/api/labs/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ labId: lab.id }),
+        body: JSON.stringify({ labId: lab.id, userName }),
       });
 
       if (response.ok) {
@@ -618,18 +619,27 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
                         Ready to Practice?
                       </h3>
                       <p className="text-sm text-gray-400 mb-6">
-                        Click &quot;Start Lab&quot; to provision a real AWS environment with all tools
-                        pre-installed. You&apos;ll get 30 minutes of free practice time.
+                        Enter your name and click &quot;Start Lab&quot; to provision a real AWS environment.
                       </p>
-                      <motion.button
-                        className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/25"
-                        onClick={startLab}
-                        whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(16,185,129,0.3)' }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <FaPlay />
-                        Start Lab
-                      </motion.button>
+                      <input
+                        type="text"
+                        placeholder="Your Name (Required)"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        className="w-full max-w-[280px] mx-auto mb-6 px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 text-center"
+                      />
+                      <div className="block">
+                        <motion.button
+                          className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={startLab}
+                          disabled={!userName.trim()}
+                          whileHover={{ scale: userName.trim() ? 1.05 : 1, boxShadow: userName.trim() ? '0 20px 40px rgba(16,185,129,0.3)' : 'none' }}
+                          whileTap={{ scale: userName.trim() ? 0.95 : 1 }}
+                        >
+                          <FaPlay />
+                          Start Lab
+                        </motion.button>
+                      </div>
                       <p className="text-xs text-gray-500 mt-4">
                         No sign-up required • Auto-terminates after 30 min
                       </p>
