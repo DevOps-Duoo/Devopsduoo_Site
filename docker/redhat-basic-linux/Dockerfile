@@ -65,8 +65,7 @@ RUN echo '#!/bin/bash' > /etc/profile.d/lab-welcome.sh \
     && chmod +x /etc/profile.d/lab-welcome.sh
 
 # ── Auto-termination script ──────────────────────────────
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # ── Expose ttyd port ─────────────────────────────────────
 EXPOSE 7681
