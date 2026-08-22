@@ -357,6 +357,407 @@ const TOPICS_QUEUE: BlogTopic[] = [
     intent: "tutorial",
     targetLength: 1800
   },
+,
+  {
+    topic: "Prometheus Alertmanager High Availability Setup",
+    primaryKeyword: "alertmanager high availability",
+    secondaryKeywords: ["prometheus ha","alertmanager clustering","monitoring reliability","gossip protocol"],
+    category: "monitoring",
+    intent: "tutorial",
+    targetLength: 2000
+  },
+  {
+    topic: "How to Secure Kubernetes API Server",
+    primaryKeyword: "secure kubernetes api server",
+    secondaryKeywords: ["k8s api security","api server audit","kubernetes hardening","kube-apiserver"],
+    category: "security",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Using External Secrets Operator with AWS Secrets Manager",
+    primaryKeyword: "external secrets operator aws",
+    secondaryKeywords: ["kubernetes secrets manager","aws sm kubernetes","eso setup","secret synchronization"],
+    category: "security",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Setting up a GitOps Workflow with Flux v2",
+    primaryKeyword: "gitops workflow flux v2",
+    secondaryKeywords: ["flux cd tutorial","gitops kubernetes","flux bootstrap","kustomize flux"],
+    category: "cicd",
+    intent: "tutorial",
+    targetLength: 2200
+  },
+  {
+    topic: "Terraform vs OpenTofu - Which one to choose in 2026?",
+    primaryKeyword: "terraform vs opentofu",
+    secondaryKeywords: ["opentofu migration","iac tools 2026","hashicorp license change","opentofu features"],
+    category: "automation",
+    intent: "comparison",
+    targetLength: 2000
+  },
+  {
+    topic: "Docker Security Best Practices for Production Images",
+    primaryKeyword: "docker security best practices",
+    secondaryKeywords: ["docker image hardening","non-root containers","docker vulnerability scanning","minimal base images"],
+    category: "security",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Managing Multiple EKS Clusters with Terraform",
+    primaryKeyword: "manage multiple eks clusters terraform",
+    secondaryKeywords: ["terraform eks module","aws multi cluster","infrastructure scaling","eks lifecycle"],
+    category: "automation",
+    intent: "guide",
+    targetLength: 2200
+  },
+  {
+    topic: "How to Configure HPA based on Custom Prometheus Metrics",
+    primaryKeyword: "kubernetes hpa custom metrics prometheus",
+    secondaryKeywords: ["prometheus adapter","custom metrics api","hpa scaling rules","k8s autoscaling"],
+    category: "kubernetes",
+    intent: "tutorial",
+    targetLength: 2000
+  },
+  {
+    topic: "CI/CD for Serverless Applications on AWS",
+    primaryKeyword: "cicd serverless aws",
+    secondaryKeywords: ["serverless framework cicd","aws sam pipelines","lambda deployment","github actions serverless"],
+    category: "cicd",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Linux System Performance Tuning for High Load Servers",
+    primaryKeyword: "linux performance tuning high load",
+    secondaryKeywords: ["sysctl tuning","tcp/ip stack optimization","linux kernel parameters","ulimit configuration"],
+    category: "automation",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "Debugging DNS Issues in Kubernetes Clusters",
+    primaryKeyword: "kubernetes dns troubleshooting",
+    secondaryKeywords: ["coredns debugging","ndots issue","k8s service discovery","dns resolution timeout"],
+    category: "kubernetes",
+    intent: "troubleshooting",
+    targetLength: 1800
+  },
+  {
+    topic: "Creating Reusable GitHub Actions Workflows",
+    primaryKeyword: "reusable github actions workflows",
+    secondaryKeywords: ["github actions templates","workflow_call","composite actions","cicd standardization"],
+    category: "cicd",
+    intent: "tutorial",
+    targetLength: 1600
+  },
+  {
+    topic: "Securing CI/CD Secrets in GitHub Actions",
+    primaryKeyword: "github actions secrets security",
+    secondaryKeywords: ["oidc github actions","github environments","secret masking","github token permissions"],
+    category: "security",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Implementing Zero Downtime Deployments in Kubernetes",
+    primaryKeyword: "zero downtime deployment kubernetes",
+    secondaryKeywords: ["rolling updates k8s","readiness probes","graceful termination","blue green deployment"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "AWS IAM Roles for Service Accounts (IRSA) Explained",
+    primaryKeyword: "aws irsa eks",
+    secondaryKeywords: ["eks pod security","iam roles for service accounts","oidc provider aws","least privilege eks"],
+    category: "cloud",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Setting up Distributed Tracing with OpenTelemetry and Jaeger",
+    primaryKeyword: "opentelemetry jaeger setup",
+    secondaryKeywords: ["distributed tracing kubernetes","otel collector","microservices observability","jaeger tracing"],
+    category: "monitoring",
+    intent: "tutorial",
+    targetLength: 2200
+  },
+  {
+    topic: "How to Build Minimal Docker Images using Alpine and Distroless",
+    primaryKeyword: "minimal docker images distroless alpine",
+    secondaryKeywords: ["distroless vs alpine","docker multistage build","reduce image size","secure base images"],
+    category: "automation",
+    intent: "tutorial",
+    targetLength: 1600
+  },
+  {
+    topic: "Cost Optimization Strategies for AWS EKS",
+    primaryKeyword: "eks cost optimization",
+    secondaryKeywords: ["karpenter autoscaling","spot instances eks","fargate pricing","rightsizing pods"],
+    category: "cloud",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Automating Database Migrations in CI/CD Pipelines",
+    primaryKeyword: "database migrations cicd",
+    secondaryKeywords: ["flyway cicd","liquibase automation","schema migration strategy","zero downtime database deployment"],
+    category: "cicd",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "Understanding Kubernetes Node Affinity and Taints",
+    primaryKeyword: "kubernetes node affinity taints",
+    secondaryKeywords: ["node selector","tolerations","pod scheduling","dedicated nodes k8s"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Implementing Network Policies with Cilium",
+    primaryKeyword: "cilium network policies",
+    secondaryKeywords: ["ebpf kubernetes","cilium security","l7 network policy","container network interface"],
+    category: "security",
+    intent: "tutorial",
+    targetLength: 2000
+  },
+  {
+    topic: "Top 20 Terraform Interview Questions and Answers",
+    primaryKeyword: "terraform interview questions",
+    secondaryKeywords: ["iac interview","terraform state questions","terraform modules interview","devops interview prep"],
+    category: "interview",
+    intent: "interview",
+    targetLength: 2500
+  },
+  {
+    topic: "How to Write Custom Prometheus Exporters in Python",
+    primaryKeyword: "custom prometheus exporter python",
+    secondaryKeywords: ["prometheus client library","monitoring custom metrics","python metric exposition","prometheus integration"],
+    category: "monitoring",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Scaling GitLab Runners on Kubernetes",
+    primaryKeyword: "gitlab runner kubernetes executor",
+    secondaryKeywords: ["autoscaling gitlab runners","k8s executor","ci cd scalability","gitlab runner helm"],
+    category: "cicd",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "AWS VPC Peering vs Transit Gateway",
+    primaryKeyword: "vpc peering vs transit gateway",
+    secondaryKeywords: ["aws networking","multi vpc architecture","transit gateway cost","network topology aws"],
+    category: "cloud",
+    intent: "comparison",
+    targetLength: 1800
+  },
+  {
+    topic: "Using Kustomize for Environment Specific Kubernetes Deployments",
+    primaryKeyword: "kustomize environment deployments",
+    secondaryKeywords: ["kubernetes configuration management","kustomize overlays","kustomize bases","helm vs kustomize"],
+    category: "kubernetes",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Setting up Log Retention and Archiving in Elasticsearch",
+    primaryKeyword: "elasticsearch log retention",
+    secondaryKeywords: ["ilm elasticsearch","index lifecycle management","elk stack storage","log archiving strategy"],
+    category: "monitoring",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Best Practices for Writing Bash Scripts in DevOps",
+    primaryKeyword: "bash scripting best practices devops",
+    secondaryKeywords: ["shell script error handling","bash strict mode","shellcheck","automation scripts"],
+    category: "automation",
+    intent: "guide",
+    targetLength: 1600
+  },
+  {
+    topic: "Understanding Istio Traffic Management and Routing",
+    primaryKeyword: "istio traffic management",
+    secondaryKeywords: ["virtual service istio","destination rule","canary deployment istio","service mesh routing"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "Top 15 CI/CD Interview Questions for DevOps Engineers",
+    primaryKeyword: "cicd interview questions",
+    secondaryKeywords: ["continuous integration interview","deployment strategies questions","pipeline security interview","jenkins github actions prep"],
+    category: "interview",
+    intent: "interview",
+    targetLength: 2200
+  },
+  {
+    topic: "Securing Kubernetes Dashboard with OIDC Integration",
+    primaryKeyword: "kubernetes dashboard oidc",
+    secondaryKeywords: ["k8s dashboard security","dex kubernetes","oauth2 proxy","sso kubernetes dashboard"],
+    category: "security",
+    intent: "tutorial",
+    targetLength: 2000
+  },
+  {
+    topic: "How to Troubleshoot High Memory Usage in Java Containers",
+    primaryKeyword: "troubleshoot high memory java container",
+    secondaryKeywords: ["oomkilled java","jvm memory limits docker","heap dump kubernetes","java container optimization"],
+    category: "monitoring",
+    intent: "troubleshooting",
+    targetLength: 2000
+  },
+  {
+    topic: "AWS ECS vs EKS - Which Container Service to Choose?",
+    primaryKeyword: "aws ecs vs eks",
+    secondaryKeywords: ["fargate ecs eks","container orchestration aws","ecs simplicity","eks flexibility"],
+    category: "cloud",
+    intent: "comparison",
+    targetLength: 2200
+  },
+  {
+    topic: "Implementing Canary Deployments with Argo Rollouts",
+    primaryKeyword: "argo rollouts canary deployment",
+    secondaryKeywords: ["kubernetes progressive delivery","argo cd rollouts","metric based promotion","blue green argo"],
+    category: "cicd",
+    intent: "tutorial",
+    targetLength: 2000
+  },
+  {
+    topic: "Setting up Promtail and Loki for Kubernetes Log Aggregation",
+    primaryKeyword: "loki promtail kubernetes",
+    secondaryKeywords: ["grafana loki setup","log aggregation k8s","promtail configuration","elk alternative"],
+    category: "monitoring",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Infrastructure as Code Security Scanning with Checkov",
+    primaryKeyword: "checkov iac security",
+    secondaryKeywords: ["terraform security scan","checkov github actions","cloudformation security","devsecops iac"],
+    category: "security",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Managing Terraform State in a Team Environment",
+    primaryKeyword: "terraform state management team",
+    secondaryKeywords: ["terraform cloud","remote backend s3","state locking dynamodb","terraform collaboration"],
+    category: "automation",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Optimizing Node.js Application Performance in Docker",
+    primaryKeyword: "nodejs performance docker",
+    secondaryKeywords: ["pm2 docker","nodejs memory limits","docker node environment","node cluster mode"],
+    category: "automation",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "How to Create a Highly Available Kubernetes Cluster with Kubeadm",
+    primaryKeyword: "ha kubernetes cluster kubeadm",
+    secondaryKeywords: ["kubeadm ha setup","stacked etcd","external etcd","kubernetes control plane ha"],
+    category: "kubernetes",
+    intent: "tutorial",
+    targetLength: 2500
+  },
+  {
+    topic: "Using Datadog APM for Microservices Troubleshooting",
+    primaryKeyword: "datadog apm troubleshooting",
+    secondaryKeywords: ["distributed tracing datadog","apm bottleneck","microservices performance","datadog traces"],
+    category: "monitoring",
+    intent: "troubleshooting",
+    targetLength: 1800
+  },
+  {
+    topic: "Top 25 AWS Interview Questions for Cloud Engineers",
+    primaryKeyword: "aws interview questions",
+    secondaryKeywords: ["aws solutions architect interview","cloud engineer questions","vpc interview questions","aws security interview"],
+    category: "interview",
+    intent: "interview",
+    targetLength: 2500
+  },
+  {
+    topic: "Automating SSL Certificate Management with cert-manager",
+    primaryKeyword: "cert-manager kubernetes setup",
+    secondaryKeywords: ["lets encrypt k8s","kubernetes ssl certificates","cert-manager ingress","automated tls"],
+    category: "security",
+    intent: "tutorial",
+    targetLength: 1800
+  },
+  {
+    topic: "Building a Multi-Architecture Docker Image with buildx",
+    primaryKeyword: "multi architecture docker image buildx",
+    secondaryKeywords: ["docker buildx arm64","cross compilation docker","apple silicon docker build","multi arch manifest"],
+    category: "cicd",
+    intent: "tutorial",
+    targetLength: 1600
+  },
+  {
+    topic: "AWS Route 53 Routing Policies Explained with Examples",
+    primaryKeyword: "aws route 53 routing policies",
+    secondaryKeywords: ["latency based routing","weighted routing route53","failover routing aws","geolocation routing"],
+    category: "cloud",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Understanding Kubernetes Pod Disruption Budgets (PDB)",
+    primaryKeyword: "kubernetes pod disruption budget",
+    secondaryKeywords: ["pdb k8s","voluntary disruptions","high availability kubernetes","drain node safely"],
+    category: "kubernetes",
+    intent: "guide",
+    targetLength: 1600
+  },
+  {
+    topic: "Configuring Alertmanager Routes and Receivers",
+    primaryKeyword: "alertmanager routes configuration",
+    secondaryKeywords: ["prometheus alert routing","alertmanager slack integration","pagerduty alertmanager","alert grouping"],
+    category: "monitoring",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Securing Docker Daemon and Socket Access",
+    primaryKeyword: "secure docker daemon socket",
+    secondaryKeywords: ["docker socket vulnerability","docker tls authentication","docker daemon attack surface","rootless docker"],
+    category: "security",
+    intent: "guide",
+    targetLength: 1800
+  },
+  {
+    topic: "Managing Configuration with Consul and Vault in Kubernetes",
+    primaryKeyword: "consul vault kubernetes config",
+    secondaryKeywords: ["hashicorp consul k8s","dynamic configuration","service mesh consul","vault secret backend"],
+    category: "automation",
+    intent: "guide",
+    targetLength: 2000
+  },
+  {
+    topic: "Troubleshooting AWS Transit Gateway Connectivity Issues",
+    primaryKeyword: "aws transit gateway troubleshooting",
+    secondaryKeywords: ["tgw routing","vpc attachment issues","transit gateway network analyzer","aws network connectivity"],
+    category: "cloud",
+    intent: "troubleshooting",
+    targetLength: 2000
+  },
+  {
+    topic: "How to Build an Internal Developer Platform (IDP) with Backstage",
+    primaryKeyword: "build idp spotify backstage",
+    secondaryKeywords: ["internal developer platform","backstage software catalog","developer portal setup","platform engineering"],
+    category: "automation",
+    intent: "tutorial",
+    targetLength: 2200
+  }
 ];
 
 // ============================================
@@ -380,7 +781,6 @@ Output format:
 - Use H3 for subsections
 - Include code blocks with proper language tags
 - Add comments in code for clarity
-- Include a TL;DR at the beginning
 - End with a clear conclusion and next steps`;
 
 function generateUserPrompt(topic: BlogTopic): string {
@@ -393,7 +793,7 @@ function generateUserPrompt(topic: BlogTopic): string {
 **Target Length:** ${topic.targetLength} words
 
 Requirements:
-1. Start with a TL;DR section (2-3 bullet points)
+1. Start with an engaging introduction paragraph setting up the context
 2. Include a "The Problem" or "What You'll Learn" section
 3. Provide step-by-step instructions with actual commands
 4. Include at least 2 code/command examples with explanations
