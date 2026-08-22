@@ -31,6 +31,7 @@ export interface Lab {
   steps: LabStep[];
   dockerImage: string;
   dockerRunFlags?: string;
+  hasWebPreview?: boolean;
   ecsTaskFamily: string;
   status: LabStatus;
   popularityScore: number;
@@ -177,9 +178,9 @@ This is the same technique used by CI/CD pipelines (Jenkins, GitLab CI, GitHub A
       },
       {
         title: 'Run Your First Container',
-        description: 'Pull and run the official Alpine Linux container inside this container.',
+        description: 'Pull and run the official Alpine Linux container inside this container. Then start an Nginx server and view it via the Web Preview tab!',
         command: 'docker run --rm alpine echo "Hello from a container inside a container!" && docker run -d --name web-server -p 8080:80 nginx:alpine && docker ps',
-        hint: 'The --rm flag automatically removes the container after it exits',
+        hint: 'Map your containers to port 8080 to access them via the Web Preview tab.',
       },
       {
         title: 'Build a Custom Image',
@@ -214,6 +215,7 @@ This is the same technique used by CI/CD pipelines (Jenkins, GitLab CI, GitHub A
     ],
     dockerImage: 'devopsduoo/lab-docker-dind:latest',
     dockerRunFlags: '--privileged --memory=512m',
+    hasWebPreview: true,
     ecsTaskFamily: 'lab-docker-inside-container',
     status: 'available',
     popularityScore: 95,

@@ -19,6 +19,8 @@ import {
   FaCopy,
   FaCheck,
   FaSpinner,
+  FaGlobe,
+  FaExternalLinkAlt,
 } from 'react-icons/fa';
 import { getLabById, difficultyConfig, type Lab, type SessionStatus } from '@/lib/labs';
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
@@ -190,6 +192,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [userName, setUserName] = useState('');
+  const [activeTab, setActiveTab] = useState<'terminal' | 'preview'>('terminal');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -571,7 +574,41 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
 
             {/* ─────── RIGHT: Terminal ─────── */}
             <Panel defaultSize={65} minSize={30} className="bg-[#0a0e1a] relative">
-              <div className="absolute inset-0">
+              <div className="absolute inset-0 flex flex-col">
+                
+                {/* Header Tabs for Web Preview (DinD) */}
+                {lab.hasWebPreview && isActive && (
+                  <div className="flex-none flex items-center justify-between px-4 py-2 bg-[#0a0e1a] border-b border-gray-800 z-30">
+                    <div className="flex gap-2 p-1 bg-gray-950 rounded-lg border border-gray-800">
+                      <button 
+                        onClick={() => setActiveTab('terminal')}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'terminal' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                      >
+                        <FaTerminal className="text-xs" />
+                        Terminal
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('preview')}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'preview' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                      >
+                        <FaGlobe className="text-xs" />
+                        Web Preview (8080)
+                      </button>
+                    </div>
+                    {activeTab === 'preview' && sessionId && (
+                      <a 
+                        href={`https://lab.devopsduoo.in/s/${sessionId}/preview/`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300 transition-colors bg-primary-500/10 px-3 py-1.5 rounded-md"
+                      >
+                        Open Fullscreen <FaExternalLinkAlt className="text-[10px]" />
+                      </a>
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex-1 relative">
                 {/* Provisioning overlay */}
                 <AnimatePresence>
                   {isProvisioning && <ProvisioningOverlay />}
@@ -648,13 +685,24 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
                 )}
 
                 {/* Active terminal */}
-                {(isActive || isProvisioning) && (
+                {(isActive || isProvisioning) && activeTab === 'terminal' && (
                   <LabTerminal
                     terminalUrl={terminalUrl}
                     isConnected={isActive}
                     sessionStatus={sessionStatus}
                   />
                 )}
+
+                {/* Web Preview Iframe */}
+                {isActive && activeTab === 'preview' && sessionId && (
+                  <iframe
+                    src={`https://lab.devopsduoo.in/s/${sessionId}/preview/`}
+                    className="w-full h-full border-0 bg-white"
+                    title="Web Preview"
+                    sandbox="allow-same-origin allow-scripts allow-forms"
+                  />
+                )}
+                </div>
               </div>
             </Panel>
           </PanelGroup>

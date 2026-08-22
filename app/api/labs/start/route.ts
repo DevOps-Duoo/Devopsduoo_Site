@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
                 lab_id: labId,
                 docker_image: lab.dockerImage,
                 docker_run_flags: lab.dockerRunFlags || '',
+                has_web_preview: lab.hasWebPreview ? 'true' : 'false',
                 ttl_minutes: '30',
                 user_name: userName || 'Anonymous',
               },

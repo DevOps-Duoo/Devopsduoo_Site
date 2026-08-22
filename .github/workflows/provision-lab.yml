@@ -34,6 +34,11 @@ on:
         required: false
         default: ''
         type: string
+      has_web_preview:
+        description: 'Whether this lab needs a web preview port allocated'
+        required: false
+        default: 'false'
+        type: string
 
 
 env:
@@ -61,6 +66,7 @@ jobs:
           echo "**Lab ID**: \`${{ inputs.lab_id }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Docker Image**: \`${{ inputs.docker_image }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**TTL**: \`${{ inputs.ttl_minutes }} minutes\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Web Preview**: \`${{ inputs.has_web_preview }}\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -149,6 +155,41 @@ jobs:
 
           echo "port=$PORT" >> $GITHUB_OUTPUT
           echo "✅ Allocated port: $PORT"
+
+      # ─── Find an available preview port ────────────────
+      - name: Allocate Preview Port
+        id: preview_port
+        if: inputs.has_web_preview == 'true'
+        run: |
+          INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
+
+          # Check which preview ports (8081-8090) are in use via SSM
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids $INSTANCE_ID \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["docker ps --format \"{{.Ports}}\" 2>/dev/null | grep -oP \"0\\.0\\.0\\.0:\\K[0-9]+\" | sort -n || echo \"\""]' \
+            --query 'Command.CommandId' \
+            --output text)
+
+          # Wait for command to complete
+          sleep 5
+          USED_PORTS=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id $INSTANCE_ID \
+            --query 'StandardOutputContent' \
+            --output text 2>/dev/null || echo "")
+
+          # Find first available preview port in range 8081-8090
+          PREVIEW_PORT=8081
+          for p in $(seq 8081 8090); do
+            if ! echo "$USED_PORTS" | grep -q "^${p}$"; then
+              PREVIEW_PORT=$p
+              break
+            fi
+          done
+
+          echo "preview_port=$PREVIEW_PORT" >> $GITHUB_OUTPUT
+          echo "✅ Allocated preview port: $PREVIEW_PORT"
 
       # ─── Build the Docker image on EC2 (if needed) ─────
       - name: Build Lab Image on Server
@@ -262,10 +303,12 @@ jobs:
         run: |
           INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
           PORT="${{ steps.port.outputs.port }}"
+          PREVIEW_PORT="${{ steps.preview_port.outputs.preview_port }}"
           IMAGE="${{ steps.build.outputs.image }}"
           SESSION_ID="${{ inputs.session_id }}"
           TTL="${{ inputs.ttl_minutes }}"
           LAB_ID="${{ inputs.lab_id }}"
+          HAS_PREVIEW="${{ inputs.has_web_preview }}"
 
           # Build docker run command — include extra flags if provided (e.g. --privileged for DinD)
           EXTRA_FLAGS="${{ inputs.docker_run_flags }}"
@@ -276,7 +319,12 @@ jobs:
             MEMORY_FLAG=""
           fi
 
-          RUN_CMD="docker run -d --name lab-${SESSION_ID} -p ${PORT}:7681 -e SESSION_ID=${SESSION_ID} -e LAB_ID=${LAB_ID} -e TTL_MINUTES=${TTL} ${MEMORY_FLAG} --cpus=0.5 --restart=no ${EXTRA_FLAGS} ${IMAGE} && echo Container started on port ${PORT}"
+          PREVIEW_FLAG=""
+          if [ "$HAS_PREVIEW" = "true" ] && [ -n "$PREVIEW_PORT" ]; then
+            PREVIEW_FLAG="-p ${PREVIEW_PORT}:8080"
+          fi
+
+          RUN_CMD="docker run -d --name lab-${SESSION_ID} -p ${PORT}:7681 $PREVIEW_FLAG -e SESSION_ID=${SESSION_ID} -e LAB_ID=${LAB_ID} -e TTL_MINUTES=${TTL} ${MEMORY_FLAG} --cpus=0.5 --restart=no ${EXTRA_FLAGS} ${IMAGE} && echo Container started on port ${PORT}"
 
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
@@ -322,12 +370,21 @@ jobs:
           INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
           SESSION_ID="${{ inputs.session_id }}"
           PORT="${{ steps.start.outputs.port }}"
+          PREVIEW_PORT="${{ steps.preview_port.outputs.preview_port }}"
+          HAS_PREVIEW="${{ inputs.has_web_preview }}"
 
           # Add session→port mapping to Nginx and reload
+          # Pass both ports if preview is enabled
+          if [ "$HAS_PREVIEW" = "true" ] && [ -n "$PREVIEW_PORT" ]; then
+            CMD="lab-add-session ${SESSION_ID} ${PORT} ${PREVIEW_PORT}"
+          else
+            CMD="lab-add-session ${SESSION_ID} ${PORT}"
+          fi
+
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --parameters "{\"commands\":[\"lab-add-session ${SESSION_ID} ${PORT}\"]}" \
+            --parameters "{\"commands\":[\"$CMD\"]}" \
             --query 'Command.CommandId' \
             --output text)
 
@@ -354,6 +411,9 @@ jobs:
           echo "  Session ID:   ${{ inputs.session_id }}"
           echo "  Lab:          ${{ inputs.lab_id }}"
           echo "  Terminal:     ${{ steps.register.outputs.terminal_url }}"
+          if [ "${{ inputs.has_web_preview }}" = "true" ]; then
+            echo "  Preview URL:  https://${{ env.LAB_DOMAIN }}/s/${{ inputs.session_id }}/preview/"
+          fi
           echo "  Port:         ${{ steps.start.outputs.port }}"
           echo "  TTL:          ${{ inputs.ttl_minutes }} minutes"
           echo "  Server:       ${{ steps.server.outputs.instance_id }}"

@@ -110,6 +110,7 @@ jobs:
           # Always ensure rules exist (ignore errors if they already exist)
           aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0 2>/dev/null || true
           aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 7681-7690 --cidr 0.0.0.0/0 2>/dev/null || true
+          aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 8081-8090 --cidr 0.0.0.0/0 2>/dev/null || true  # Web preview ports for DinD labs
           aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0 2>/dev/null || true
           aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 443 --cidr 0.0.0.0/0 2>/dev/null || true
 
@@ -292,11 +293,18 @@ jobs:
           }
           PORTMAP
 
+          cat > /etc/nginx/lab-preview-ports.map << 'PREVIEWPORTMAP'
+          map $session_id $preview_port {
+              default 0;
+          }
+          PREVIEWPORTMAP
+
           # ────────────────────────────────────────────
           # Configure Nginx Reverse Proxy (Disabled initially)
           # ────────────────────────────────────────────
           cat > /etc/nginx/conf.d/lab-proxy.conf.disabled << NGINXCONF
           include /etc/nginx/lab-ports.map;
+          include /etc/nginx/lab-preview-ports.map;
 
           server {
               listen 80;
@@ -327,6 +335,29 @@ jobs:
               add_header Strict-Transport-Security "max-age=63072000" always;
               add_header Content-Security-Policy "frame-ancestors http://localhost:* http://127.0.0.1:* https://*.devopsduoo.in https://devopsduoo.in https://*.devopsduoo.com https://devopsduoo.com" always;
               add_header X-Content-Type-Options "nosniff" always;
+
+              location ~ ^/s/([^/]+)/preview/(.*) {
+                  set \$session_id \$1;
+                  set \$remaining_path \$2;
+
+                  if (\$preview_port = 0) {
+                      return 404 '{"error": "Preview not available or session expired"}';
+                  }
+
+                  proxy_pass http://127.0.0.1:\$preview_port/\$remaining_path\$is_args\$args;
+                  proxy_http_version 1.1;
+                  
+                  proxy_set_header Upgrade \$http_upgrade;
+                  proxy_set_header Connection "upgrade";
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_read_timeout 3600s;
+                  proxy_send_timeout 3600s;
+                  proxy_buffering off;
+                  proxy_cache off;
+              }
 
               location ~ ^/s/([^/]+)/(.*) {
                   set \$session_id \$1;
@@ -375,13 +406,23 @@ jobs:
           #!/bin/bash
           SESSION_ID="$1"
           PORT="$2"
+          PREVIEW_PORT="$3"
           if [ -z "$SESSION_ID" ] || [ -z "$PORT" ]; then
-              echo "Usage: lab-add-session <session-id> <port>"
+              echo "Usage: lab-add-session <session-id> <port> [preview-port]"
               exit 1
           fi
           sed -i "/^}$/i\\    $SESSION_ID $PORT;" /etc/nginx/lab-ports.map
+          if [ -n "$PREVIEW_PORT" ]; then
+              # ensure lab-preview-ports.map exists and is valid
+              if [ ! -f /etc/nginx/lab-preview-ports.map ]; then
+                  echo "map \$session_id \$preview_port {" > /etc/nginx/lab-preview-ports.map
+                  echo "    default         0;" >> /etc/nginx/lab-preview-ports.map
+                  echo "}" >> /etc/nginx/lab-preview-ports.map
+              fi
+              sed -i "/^}$/i\\    $SESSION_ID $PREVIEW_PORT;" /etc/nginx/lab-preview-ports.map
+          fi
           nginx -s reload 2>/dev/null || true
-          echo "Added session $SESSION_ID -> port $PORT"
+          echo "Added session $SESSION_ID -> port $PORT (preview: ${PREVIEW_PORT:-none})"
           ADDSCRIPT
           chmod +x /usr/local/bin/lab-add-session
 
@@ -394,6 +435,9 @@ jobs:
               exit 1
           fi
           sed -i "/$SESSION_ID/d" /etc/nginx/lab-ports.map
+          if [ -f /etc/nginx/lab-preview-ports.map ]; then
+              sed -i "/$SESSION_ID/d" /etc/nginx/lab-preview-ports.map
+          fi
           nginx -s reload 2>/dev/null || true
           echo "Removed session $SESSION_ID"
           RMSCRIPT
