@@ -55,22 +55,20 @@ RUN adduser -D -s /bin/bash labuser \
 
 # ── Set up a welcome message & lab environment ────────────
 RUN mkdir -p /etc/profile.d \
-    && cat > /etc/profile.d/lab-welcome.sh << 'WELCOME'
-#!/bin/bash
-echo ""
-echo "  ╔═══════════════════════════════════════════════════════╗"
-echo "  ║       🐳  DevOps Duoo - Docker Inside Container  🐳  ║"
-echo "  ║                                                       ║"
-echo "  ║  Welcome to the Docker-in-Docker (DinD) Lab!         ║"
-echo "  ║  You have 30 minutes of free practice time.           ║"
-echo "  ║                                                       ║"
-echo "  ║  Follow the lab steps on the left panel.              ║"
-echo "  ╚═══════════════════════════════════════════════════════╝"
-echo ""
-echo "  Docker version: $(docker --version 2>/dev/null || echo 'starting...')"
-echo ""
-WELCOME
-RUN chmod +x /etc/profile.d/lab-welcome.sh
+    && echo '#!/bin/bash' > /etc/profile.d/lab-welcome.sh \
+    && echo 'echo ""' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ╔═══════════════════════════════════════════════════════╗"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║       🐳  DevOps Duoo - Docker Inside Container  🐳  ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║                                                       ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║  Welcome to the Docker-in-Docker (DinD) Lab!         ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║  You have 30 minutes of free practice time.           ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║                                                       ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ║  Follow the lab steps on the left panel.              ║"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  ╚═══════════════════════════════════════════════════════╝"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo ""' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo "  Docker version: $(docker --version 2>/dev/null || echo starting...)"' >> /etc/profile.d/lab-welcome.sh \
+    && echo 'echo ""' >> /etc/profile.d/lab-welcome.sh \
+    && chmod +x /etc/profile.d/lab-welcome.sh
 
 # ── Entrypoint ───────────────────────────────────────────
 COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh
