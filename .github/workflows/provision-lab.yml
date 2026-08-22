@@ -29,6 +29,11 @@ on:
         description: 'Name of the user starting the lab'
         required: false
         type: string
+      docker_run_flags:
+        description: 'Extra docker run flags (e.g. --privileged for DinD labs)'
+        required: false
+        default: ''
+        type: string
 
 
 env:
@@ -262,8 +267,16 @@ jobs:
           TTL="${{ inputs.ttl_minutes }}"
           LAB_ID="${{ inputs.lab_id }}"
 
-          # Simple individual commands — no heredoc needed
-          RUN_CMD="docker run -d --name lab-${SESSION_ID} -p ${PORT}:7681 -e SESSION_ID=${SESSION_ID} -e LAB_ID=${LAB_ID} -e TTL_MINUTES=${TTL} --memory=384m --cpus=0.5 --restart=no ${IMAGE} && echo Container started on port ${PORT}"
+          # Build docker run command — include extra flags if provided (e.g. --privileged for DinD)
+          EXTRA_FLAGS="${{ inputs.docker_run_flags }}"
+
+          # Use default memory limit unless extra flags override it
+          MEMORY_FLAG="--memory=384m"
+          if echo "$EXTRA_FLAGS" | grep -q "\-\-memory"; then
+            MEMORY_FLAG=""
+          fi
+
+          RUN_CMD="docker run -d --name lab-${SESSION_ID} -p ${PORT}:7681 -e SESSION_ID=${SESSION_ID} -e LAB_ID=${LAB_ID} -e TTL_MINUTES=${TTL} ${MEMORY_FLAG} --cpus=0.5 --restart=no ${EXTRA_FLAGS} ${IMAGE} && echo Container started on port ${PORT}"
 
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \

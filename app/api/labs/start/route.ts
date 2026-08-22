@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
                 session_id: sessionId,
                 lab_id: labId,
                 docker_image: lab.dockerImage,
+                docker_run_flags: lab.dockerRunFlags || '',
                 ttl_minutes: '30',
                 user_name: userName || 'Anonymous',
               },

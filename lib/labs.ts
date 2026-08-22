@@ -30,6 +30,7 @@ export interface Lab {
   learningObjectives: string[];
   steps: LabStep[];
   dockerImage: string;
+  dockerRunFlags?: string;
   ecsTaskFamily: string;
   status: LabStatus;
   popularityScore: number;
@@ -146,6 +147,76 @@ This lab is perfect for anyone starting their DevOps journey. A solid Linux foun
     ecsTaskFamily: 'lab-redhat-basic-linux',
     status: 'available',
     popularityScore: 98,
+  },
+  {
+    id: 'docker-inside-container',
+    title: 'Docker Inside Container',
+    shortDescription: 'Learn Docker-in-Docker (DinD) — run and manage Docker containers from within a container. Master images, networking, volumes, and Compose in an isolated environment.',
+    fullDescription: `Experience Docker-in-Docker (DinD) — one of the most powerful patterns in modern DevOps. In this hands-on lab, you'll run Docker inside a container, build images, manage networks, attach volumes, and orchestrate multi-container applications — all from within an isolated Docker environment.
+
+This is the same technique used by CI/CD pipelines (Jenkins, GitLab CI, GitHub Actions) to build and test Docker images. Mastering DinD gives you deep insight into how containers really work under the hood.`,
+    difficulty: 'beginner',
+    estimatedMinutes: 25,
+    tools: ['Docker', 'Docker Compose'],
+    category: 'containers',
+    prerequisites: ['Basic Linux command line knowledge'],
+    learningObjectives: [
+      'Understand Docker-in-Docker (DinD) and its use cases',
+      'Run and manage Docker containers inside a container',
+      'Build custom Docker images with Dockerfiles',
+      'Create and inspect Docker networks',
+      'Use volumes for persistent data inside containers',
+      'Orchestrate multi-container apps with Docker Compose',
+    ],
+    steps: [
+      {
+        title: 'Verify Docker-in-Docker',
+        description: 'Confirm Docker is available inside this container and inspect the DinD environment.',
+        command: 'docker --version && docker info && echo "Docker-in-Docker is ready!"',
+        hint: 'You are running Docker inside a Docker container — this is DinD!',
+      },
+      {
+        title: 'Run Your First Container',
+        description: 'Pull and run the official Alpine Linux container inside this container.',
+        command: 'docker run --rm alpine echo "Hello from a container inside a container!" && docker run -d --name web-server -p 8080:80 nginx:alpine && docker ps',
+        hint: 'The --rm flag automatically removes the container after it exits',
+      },
+      {
+        title: 'Build a Custom Image',
+        description: 'Create a Dockerfile and build your own custom image inside the container.',
+        command: 'mkdir -p ~/dind-lab && cd ~/dind-lab && cat > Dockerfile << \'EOF\'\nFROM alpine:latest\nRUN apk add --no-cache curl bash\nCOPY entrypoint.sh /entrypoint.sh\nRUN chmod +x /entrypoint.sh\nENTRYPOINT ["/entrypoint.sh"]\nEOF\necho \'#!/bin/bash\necho "=== DevOps Duoo DinD Lab ==="\necho "Hostname: $(hostname)"\necho "Date: $(date)"\necho "Container is running!"\' > entrypoint.sh && docker build -t my-dind-app . && docker run --rm my-dind-app',
+        hint: 'ENTRYPOINT defines the command that runs when the container starts',
+      },
+      {
+        title: 'Docker Networking',
+        description: 'Create a custom Docker network and connect containers to communicate with each other.',
+        command: 'docker network create lab-net && docker run -d --name app1 --network lab-net alpine sleep 300 && docker run -d --name app2 --network lab-net alpine sleep 300 && docker exec app1 ping -c 3 app2 && docker network inspect lab-net',
+        hint: 'Containers on the same custom network can reach each other by name',
+      },
+      {
+        title: 'Persistent Volumes',
+        description: 'Create and use Docker volumes to persist data between container restarts.',
+        command: 'docker volume create lab-data && docker run --rm -v lab-data:/data alpine sh -c "echo \'Data persists across containers!\' > /data/message.txt" && docker run --rm -v lab-data:/data alpine cat /data/message.txt && docker volume inspect lab-data',
+        hint: 'Volumes survive container deletion — perfect for databases and shared state',
+      },
+      {
+        title: 'Docker Compose in DinD',
+        description: 'Create a multi-container application with Docker Compose inside the container.',
+        command: 'cd ~/dind-lab && cat > docker-compose.yml << \'EOF\'\nversion: "3.8"\nservices:\n  web:\n    image: nginx:alpine\n    ports:\n      - "9090:80"\n  redis:\n    image: redis:alpine\n    ports:\n      - "6379:6379"\nEOF\ndocker compose up -d && docker compose ps && echo "Multi-container stack running inside DinD!"',
+        hint: 'Docker Compose orchestrates multiple containers as a single application',
+      },
+      {
+        title: 'Inspect & Cleanup',
+        description: 'Inspect container logs, stats, and clean up all resources created during the lab.',
+        command: 'docker logs web-server && docker stats --no-stream && docker compose -f ~/dind-lab/docker-compose.yml down && docker rm -f web-server app1 app2 2>/dev/null; docker rmi my-dind-app 2>/dev/null; docker network rm lab-net 2>/dev/null; docker volume rm lab-data 2>/dev/null; echo "Cleanup complete!"',
+        hint: 'Always clean up containers and resources when done to free system resources',
+      },
+    ],
+    dockerImage: 'devopsduoo/lab-docker-dind:latest',
+    dockerRunFlags: '--privileged --memory=512m',
+    ecsTaskFamily: 'lab-docker-inside-container',
+    status: 'available',
+    popularityScore: 95,
   },
   {
     id: 'docker-fundamentals',
