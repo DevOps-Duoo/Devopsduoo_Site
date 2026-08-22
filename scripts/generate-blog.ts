@@ -8,7 +8,7 @@
  *   npx tsx scripts/generate-blog.ts
  * 
  * Environment Variables:
- *   GROQ_API_KEY - Your Groq API key (free from https://console.groq.com)
+ *   GEMINI_API_KEY - Your Gemini API key (free from Google AI Studio)
  */
 
 import fs from 'fs';
@@ -816,45 +816,47 @@ DO include:
 }
 
 // ============================================
-// GROQ API INTEGRATION (FREE TIER - 30 req/min)
-// https://console.groq.com - No credit card required
+// GEMINI API INTEGRATION
+// https://aistudio.google.com/ - Free tier available
 // ============================================
-async function callGroqAPI(topic: BlogTopic): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY;
+async function callGeminiAPI(topic: BlogTopic): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
-    throw new Error('GROQ_API_KEY environment variable is not set. Get a free key at https://console.groq.com');
+    throw new Error('GEMINI_API_KEY environment variable is not set. Get a free key at https://aistudio.google.com/');
   }
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: generateUserPrompt(topic) }
-      ],
-      max_tokens: 8000,
-      temperature: 0.7,
+      system_instruction: {
+        parts: { text: SYSTEM_PROMPT }
+      },
+      contents: [{
+        parts: [{ text: generateUserPrompt(topic) }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 8000,
+      }
     })
   });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(`Groq API error (${response.status}): ${JSON.stringify(error)}`);
+    throw new Error(`Gemini API error (${response.status}): ${JSON.stringify(error)}`);
   }
 
   const data = await response.json();
   
-  if (!data.choices?.[0]?.message?.content) {
-    throw new Error('Groq API returned empty response');
+  if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    throw new Error('Gemini API returned empty response');
   }
 
-  return data.choices[0].message.content;
+  return data.candidates[0].content.parts[0].text;
 }
 
 // ============================================
@@ -947,9 +949,9 @@ async function generateBlogPost(topic: BlogTopic): Promise<void> {
   console.log(`   Intent: ${topic.intent}\n`);
 
   try {
-    // Generate content via Groq (free tier)
-    console.log('🤖 Calling Groq API (Llama 3.3 70B)...');
-    const rawContent = await callGroqAPI(topic);
+    // Generate content via Gemini
+    console.log('🤖 Calling Gemini API (gemini-2.5-flash)...');
+    const rawContent = await callGeminiAPI(topic);
     console.log('✅ Content generated successfully');
 
     // Process and structure the blog
@@ -1053,12 +1055,12 @@ Options:
   --all             Generate all topics (use with caution)
 
 Environment:
-  GROQ_API_KEY     Required. Free key from https://console.groq.com
+  GEMINI_API_KEY     Required. Free key from https://aistudio.google.com/
 
 Examples:
   npx ts-node scripts/generate-blog.ts --list
   npx ts-node scripts/generate-blog.ts --topic 0
-  GROQ_API_KEY=xxx npx tsx scripts/generate-blog.ts --next
+  GEMINI_API_KEY=xxx npx tsx scripts/generate-blog.ts --next
 `);
     process.exit(0);
   }
