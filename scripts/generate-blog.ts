@@ -357,7 +357,6 @@ const TOPICS_QUEUE: BlogTopic[] = [
     intent: "tutorial",
     targetLength: 1800
   },
-,
   {
     topic: "Prometheus Alertmanager High Availability Setup",
     primaryKeyword: "alertmanager high availability",
