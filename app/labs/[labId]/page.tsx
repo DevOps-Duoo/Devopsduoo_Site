@@ -193,6 +193,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   const [isMobile, setIsMobile] = useState(false);
   const [userName, setUserName] = useState('');
   const [activeTab, setActiveTab] = useState<'terminal' | 'preview'>('terminal');
+  const [previewKey, setPreviewKey] = useState(0);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -596,14 +597,23 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
                       </button>
                     </div>
                     {activeTab === 'preview' && sessionId && (
-                      <a 
-                        href={`https://lab.devopsduoo.in/s/${sessionId}/preview/`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300 transition-colors bg-primary-500/10 px-3 py-1.5 rounded-md"
-                      >
-                        Open Fullscreen <FaExternalLinkAlt className="text-[10px]" />
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setPreviewKey(k => k + 1)}
+                          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors bg-gray-800 px-3 py-1.5 rounded-md"
+                          title="Refresh preview"
+                        >
+                          <FaRedo className="text-[10px]" /> Refresh
+                        </button>
+                        <a 
+                          href={`https://lab.devopsduoo.in/s/${sessionId}/preview/`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300 transition-colors bg-primary-500/10 px-3 py-1.5 rounded-md"
+                        >
+                          Fullscreen <FaExternalLinkAlt className="text-[10px]" />
+                        </a>
+                      </div>
                     )}
                   </div>
                 )}
@@ -696,6 +706,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
                 {/* Web Preview Iframe */}
                 {isActive && activeTab === 'preview' && sessionId && (
                   <iframe
+                    key={previewKey}
                     src={`https://lab.devopsduoo.in/s/${sessionId}/preview/`}
                     className="w-full h-full border-0 bg-white"
                     title="Web Preview"
