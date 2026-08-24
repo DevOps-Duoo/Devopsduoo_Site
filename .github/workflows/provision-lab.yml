@@ -184,29 +184,28 @@ jobs:
             echo "⏳ Waiting for instance to start..."
             aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
 
-            # Allocate new Elastic IP
-            ALLOC_ID=$(aws ec2 allocate-address --domain vpc \
-              --tag-specifications "ResourceType=elastic-ip,Tags=[{Key=Name,Value=devops-duoo-lab-eip},{Key=Project,Value=DevOpsDuoo}]" \
-              --query 'AllocationId' --output text)
+            # Re-attach existing Elastic IP (kept across server lifecycles for DNS stability)
+            ALLOC_ID=$(aws ec2 describe-addresses \
+              --filters "Name=tag:Project,Values=DevOpsDuoo" \
+              --query 'Addresses[0].AllocationId' --output text 2>/dev/null || echo "None")
+
+            if [ "$ALLOC_ID" = "None" ] || [ -z "$ALLOC_ID" ]; then
+              # No existing EIP — allocate a new one (first time or EIP was manually released)
+              echo "⚠️ No existing EIP found. Allocating new one..."
+              ALLOC_ID=$(aws ec2 allocate-address --domain vpc \
+                --tag-specifications "ResourceType=elastic-ip,Tags=[{Key=Name,Value=devops-duoo-lab-eip},{Key=Project,Value=DevOpsDuoo}]" \
+                --query 'AllocationId' --output text)
+              echo "✅ New Elastic IP allocated: $ALLOC_ID"
+              echo "⚠️ You may need to update your Netlify DNS A record for lab.devopsduoo.in"
+            else
+              echo "✅ Reusing existing Elastic IP: $ALLOC_ID"
+            fi
+
             aws ec2 associate-address --instance-id "$INSTANCE_ID" --allocation-id "$ALLOC_ID"
 
             PUBLIC_IP=$(aws ec2 describe-addresses --allocation-ids "$ALLOC_ID" \
               --query 'Addresses[0].PublicIp' --output text)
-
-            # Update GoDaddy DNS: lab.devopsduoo.in → new IP
-            echo "🌐 Updating DNS: ${{ env.LAB_DOMAIN }} → $PUBLIC_IP"
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
-              "https://api.godaddy.com/v1/domains/devopsduoo.in/records/A/lab" \
-              -H "Authorization: sso-key ${{ secrets.GODADDY_API_KEY }}:${{ secrets.GODADDY_API_SECRET }}" \
-              -H "Content-Type: application/json" \
-              -d "[{\"data\": \"${PUBLIC_IP}\", \"ttl\": 600}]")
-
-            if [ "$HTTP_STATUS" = "200" ]; then
-              echo "✅ DNS updated successfully"
-            else
-              echo "⚠️ DNS update returned HTTP $HTTP_STATUS — may need manual update"
-              echo "   Set A record: lab.devopsduoo.in → $PUBLIC_IP"
-            fi
+            echo "✅ Elastic IP $PUBLIC_IP associated with $INSTANCE_ID"
 
             # Wait for user-data to complete (Golden AMI = fast, ~90s)
             echo "⏳ Waiting for services to start..."

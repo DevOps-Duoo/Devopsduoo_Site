@@ -149,23 +149,23 @@ jobs:
           INSTANCE_ID="${{ steps.check.outputs.instance_id }}"
           echo "🛑 Terminating lab server: $INSTANCE_ID"
 
-          # ─── Release Elastic IP ───
+          # ─── Keep Elastic IP (DNS is on Netlify, can't auto-update) ───
+          # Just disassociate the EIP from the instance, but keep it allocated
+          # so the DNS A record (lab.devopsduoo.in) stays valid on recreate.
           ALLOC_ID=$(aws ec2 describe-addresses \
             --filters "Name=tag:Project,Values=DevOpsDuoo" \
             --query 'Addresses[0].AllocationId' --output text 2>/dev/null || echo "None")
 
           if [ "$ALLOC_ID" != "None" ] && [ -n "$ALLOC_ID" ]; then
-            # Disassociate first (if associated)
             ASSOC_ID=$(aws ec2 describe-addresses \
               --allocation-ids "$ALLOC_ID" \
               --query 'Addresses[0].AssociationId' --output text 2>/dev/null || echo "None")
             if [ "$ASSOC_ID" != "None" ] && [ -n "$ASSOC_ID" ]; then
               aws ec2 disassociate-address --association-id "$ASSOC_ID" 2>/dev/null || true
             fi
-            aws ec2 release-address --allocation-id "$ALLOC_ID" 2>/dev/null || true
-            echo "✅ Elastic IP released"
-          else
-            echo "ℹ️ No Elastic IP found to release"
+            EIP_ADDR=$(aws ec2 describe-addresses --allocation-ids "$ALLOC_ID" \
+              --query 'Addresses[0].PublicIp' --output text 2>/dev/null || echo "unknown")
+            echo "✅ Elastic IP $EIP_ADDR kept (disassociated, DNS stays valid)"
           fi
 
           # ─── Terminate Instance ───
@@ -178,18 +178,19 @@ jobs:
           echo "  🗑️  Server Terminated"
           echo "═══════════════════════════════════════"
           echo "  Instance:    $INSTANCE_ID"
-          echo "  EIP:         Released"
+          echo "  EIP:         Kept (DNS stable)"
           echo "  Golden AMI:  ${{ steps.check.outputs.golden_ami }} (preserved)"
           echo ""
           echo "  Next lab request will auto-create"
           echo "  a new server from the Golden AMI"
-          echo "  in ~2-3 minutes."
+          echo "  and re-attach the same EIP."
+          echo "  (~2-3 minutes)"
           echo "═══════════════════════════════════════"
 
           echo "## 🗑️ Server Terminated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Instance \`$INSTANCE_ID\` has been terminated." >> $GITHUB_STEP_SUMMARY
-          echo "Elastic IP released. Golden AMI preserved." >> $GITHUB_STEP_SUMMARY
+          echo "Elastic IP kept for DNS stability. Golden AMI preserved." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Next lab request will auto-create from Golden AMI (~2-3 min)." >> $GITHUB_STEP_SUMMARY
 
