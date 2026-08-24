@@ -259,6 +259,11 @@ jobs:
               if [ "$IDLE_SECONDS" -ge "$IDLE_THRESHOLD_SECONDS" ]; then
                 echo "[idle-monitor] $(date): 🛑 Idle threshold reached. Stopping instance..."
 
+                # Tag with stop time so the janitor knows when we went idle
+                aws ec2 create-tags --resources "$INSTANCE_ID" \
+                  --tags "Key=StoppedAt,Value=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                  --region "$REGION"
+
                 # Clean up any stopped containers and dangling images
                 docker container prune -f 2>/dev/null || true
                 docker image prune -f 2>/dev/null || true
@@ -596,6 +601,40 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --parameters '{"commands":["echo \"0 3 * * * root certbot renew --quiet --deploy-hook systemctl reload nginx\" > /etc/cron.d/certbot-renew && chmod 644 /etc/cron.d/certbot-renew"]}' \
             --output text > /dev/null 2>&1 || true
+
+      # ─── Bake Golden AMI (one-time) ─────────────────
+      - name: Bake Golden AMI
+        if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
+        run: |
+          INSTANCE_ID="${{ steps.launch.outputs.instance_id }}"
+
+          # Wait for SSL setup to fully settle
+          sleep 30
+
+          # Delete any old Golden AMIs (keep only the latest)
+          OLD_AMIS=$(aws ec2 describe-images --owners self \
+            --filters "Name=tag:Project,Values=DevOpsDuoo" "Name=tag:Type,Values=GoldenAMI" \
+            --query 'Images[*].[ImageId,BlockDeviceMappings[0].Ebs.SnapshotId]' \
+            --output text 2>/dev/null || echo "")
+          while read -r OLD_AMI OLD_SNAP; do
+            if [ -n "$OLD_AMI" ] && [ "$OLD_AMI" != "None" ] && [ "$OLD_AMI" != "" ]; then
+              aws ec2 deregister-image --image-id "$OLD_AMI" 2>/dev/null || true
+              aws ec2 delete-snapshot --snapshot-id "$OLD_SNAP" 2>/dev/null || true
+              echo "🗑️ Removed old AMI: $OLD_AMI"
+            fi
+          done <<< "$OLD_AMIS"
+
+          # Create new Golden AMI
+          AMI_ID=$(aws ec2 create-image \
+            --instance-id "$INSTANCE_ID" \
+            --name "devops-duoo-lab-golden-$(date +%Y%m%d%H%M)" \
+            --description "Pre-configured lab server - Docker, Nginx, Certbot, idle-shutdown" \
+            --tag-specifications 'ResourceType=image,Tags=[{Key=Project,Value=DevOpsDuoo},{Key=Type,Value=GoldenAMI},{Key=Name,Value=devops-duoo-lab-golden}]' \
+            --no-reboot \
+            --output text --query 'ImageId')
+
+          echo "✅ Golden AMI baking: $AMI_ID (completes in background ~3-5 min)"
+          echo "   This AMI will be used for all future server recreations."
 
       - name: Output Summary
         if: inputs.action == 'create' && steps.check.outputs.exists != 'true'
