@@ -24,7 +24,7 @@ on:
 env:
   AWS_REGION: ap-south-1
   SERVER_NAME: devops-duoo-lab-server
-  IDLE_DAYS_THRESHOLD: 5
+  IDLE_DAYS_THRESHOLD: 2
 
 jobs:
   manage:
