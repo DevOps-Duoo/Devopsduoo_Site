@@ -303,7 +303,7 @@ You'll deploy applications, create services, scale workloads, and perform rollin
       },
     ],
     dockerImage: 'devopsduoo/lab-kubernetes-basics:latest',
-    dockerRunFlags: '--privileged --memory=768m --tmpfs /run --tmpfs /var/run',
+    dockerRunFlags: '--privileged --memory=512m --tmpfs /run --tmpfs /var/run',
     ecsTaskFamily: 'lab-kubernetes-basics',
     status: 'available',
     popularityScore: 90,
