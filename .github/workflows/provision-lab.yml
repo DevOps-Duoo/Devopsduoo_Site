@@ -39,6 +39,11 @@ on:
         required: false
         default: 'false'
         type: string
+      multi_node_config:
+        description: 'JSON config for multi-node labs (e.g. K3s). Empty = single-node lab.'
+        required: false
+        default: ''
+        type: string
 
 
 env:
@@ -335,115 +340,17 @@ jobs:
           echo "preview_port=$PREVIEW_PORT" >> $GITHUB_OUTPUT
           echo "✅ Allocated preview port: $PREVIEW_PORT"
 
-      # ─── Build the Docker image on EC2 (if needed) ─────
-      - name: Build Lab Image on Server
+      # ─── Docker Image (Pull from Hub) ──────────────────
+      - name: Set Lab Image
         id: build
         run: |
-          INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
-          LAB_ID="${{ inputs.lab_id }}"
-          IMAGE_NAME="devopsduoo-lab-${LAB_ID}:latest"
+          echo "📦 Using Docker image: ${{ inputs.docker_image }}"
+          echo "image=${{ inputs.docker_image }}" >> $GITHUB_OUTPUT
 
-          # Check if Dockerfile exists for this lab
-          LAB_DOCKER_DIR="docker/${LAB_ID}"
-
-          if [ -d "$LAB_DOCKER_DIR" ]; then
-            echo "📦 Found Dockerfile for ${LAB_ID}, building on server..."
-
-            # Read Dockerfile and entrypoint as base64
-            DOCKERFILE_B64=$(base64 -w 0 < "${LAB_DOCKER_DIR}/Dockerfile")
-            ENTRYPOINT_B64=""
-            if [ -f "${LAB_DOCKER_DIR}/entrypoint.sh" ]; then
-              ENTRYPOINT_B64=$(base64 -w 0 < "${LAB_DOCKER_DIR}/entrypoint.sh")
-            fi
-
-            # Create a build script and base64 encode it
-            cat > /tmp/build_script.sh << 'BUILDEOF'
-          #!/bin/bash
-          set -e
-          IMAGE_NAME="$1"
-          BUILD_DIR="$2"
-          DOCKERFILE_B64="$3"
-          ENTRYPOINT_B64="$4"
-
-          # We rely on Docker's native layer caching instead of skipping the build entirely.
-          # This ensures that updates to the Dockerfile or entrypoint.sh are always applied.
-
-          echo "Building image: $IMAGE_NAME"
-          mkdir -p "$BUILD_DIR"
-          cd "$BUILD_DIR"
-
-          # Decode Dockerfile
-          echo "$DOCKERFILE_B64" | base64 -d > Dockerfile
-
-          # Decode entrypoint if provided
-          if [ -n "$ENTRYPOINT_B64" ]; then
-            echo "$ENTRYPOINT_B64" | base64 -d > entrypoint.sh
-            chmod +x entrypoint.sh
-          fi
-
-          # Build the image
-          docker build -t "$IMAGE_NAME" .
-          echo "Image built successfully: $IMAGE_NAME"
-          BUILDEOF
-
-            BUILD_SCRIPT_B64=$(base64 -w 0 < /tmp/build_script.sh)
-            BUILD_DIR="/opt/devops-duoo-labs/${LAB_ID}"
-
-            # Send a simple one-liner to SSM that decodes and runs the script
-            COMMAND_ID=$(aws ssm send-command \
-              --instance-ids "$INSTANCE_ID" \
-              --document-name "AWS-RunShellScript" \
-              --timeout-seconds 300 \
-              --parameters "{\"commands\":[\"echo ${BUILD_SCRIPT_B64} | base64 -d > /tmp/build.sh && chmod +x /tmp/build.sh && bash /tmp/build.sh '${IMAGE_NAME}' '${BUILD_DIR}' '${DOCKERFILE_B64}' '${ENTRYPOINT_B64}'\"]}" \
-              --query 'Command.CommandId' \
-              --output text)
-
-            echo "⏳ Waiting for image build (this may take 2-3 min on first run)..."
-
-            # Wait for build to complete
-            for i in $(seq 1 60); do
-              STATUS=$(aws ssm get-command-invocation \
-                --command-id "$COMMAND_ID" \
-                --instance-id "$INSTANCE_ID" \
-                --query 'Status' \
-                --output text 2>/dev/null || echo "Pending")
-
-              if [ "$STATUS" = "Success" ]; then
-                echo "✅ Image build complete"
-                OUTPUT=$(aws ssm get-command-invocation \
-                  --command-id "$COMMAND_ID" \
-                  --instance-id "$INSTANCE_ID" \
-                  --query 'StandardOutputContent' \
-                  --output text 2>/dev/null || echo "")
-                echo "$OUTPUT"
-                break
-              elif [ "$STATUS" = "Failed" ]; then
-                echo "❌ Image build failed!"
-                aws ssm get-command-invocation \
-                  --command-id "$COMMAND_ID" \
-                  --instance-id "$INSTANCE_ID" \
-                  --query 'StandardOutputContent' \
-                  --output text 2>/dev/null || true
-                aws ssm get-command-invocation \
-                  --command-id "$COMMAND_ID" \
-                  --instance-id "$INSTANCE_ID" \
-                  --query 'StandardErrorContent' \
-                  --output text 2>/dev/null || true
-                exit 1
-              fi
-
-              sleep 5
-            done
-
-            echo "image=$IMAGE_NAME" >> $GITHUB_OUTPUT
-          else
-            echo "⚠️ No Dockerfile found, using input image: ${{ inputs.docker_image }}"
-            echo "image=${{ inputs.docker_image }}" >> $GITHUB_OUTPUT
-          fi
-
-      # ─── Run the lab container ─────────────────────────
+      # ─── Run the lab container (single-node) ────────────
       - name: Start Lab Container
         id: start
+        if: inputs.multi_node_config == ''
         run: |
           INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
           PORT="${{ steps.port.outputs.port }}"
@@ -507,9 +414,138 @@ jobs:
           echo "port=$PORT" >> $GITHUB_OUTPUT
           echo "✅ Container started on port $PORT"
 
+      # ─── Run multi-node lab containers (e.g. K3s) ───────
+      - name: Start Multi-Node Lab Containers
+        id: start_multi
+        if: inputs.multi_node_config != ''
+        run: |
+          INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
+          SESSION_ID="${{ inputs.session_id }}"
+          TTL="${{ inputs.ttl_minutes }}"
+          LAB_ID="${{ inputs.lab_id }}"
+          MULTI_CONFIG='${{ inputs.multi_node_config }}'
+
+          echo "🔧 Multi-node lab detected. Parsing config..."
+          echo "$MULTI_CONFIG" | jq .
+
+          # Extract node info from JSON config
+          NODE_COUNT=$(echo "$MULTI_CONFIG" | jq '.nodes | length')
+          echo "📦 Starting $NODE_COUNT node(s)..."
+
+          # ── Allocate ports for each node ──────────────
+          # Check which ports are in use
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids $INSTANCE_ID \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["docker ps --format \"{{.Ports}}\" 2>/dev/null | grep -oP \"0\\.0\\.0\\.0:\\K[0-9]+\" | sort -n || echo \"\""  ]' \
+            --query 'Command.CommandId' \
+            --output text)
+          sleep 5
+          USED_PORTS=$(aws ssm get-command-invocation \
+            --command-id $COMMAND_ID \
+            --instance-id $INSTANCE_ID \
+            --query 'StandardOutputContent' \
+            --output text 2>/dev/null || echo "")
+
+          # Allocate N consecutive ports starting from 7681
+          ALLOCATED_PORTS=""
+          NEXT_PORT=7681
+          for i in $(seq 0 $((NODE_COUNT - 1))); do
+            while echo "$USED_PORTS" | grep -q "^${NEXT_PORT}$" || echo "$ALLOCATED_PORTS" | grep -q "$NEXT_PORT"; do
+              NEXT_PORT=$((NEXT_PORT + 1))
+            done
+            if [ -z "$ALLOCATED_PORTS" ]; then
+              ALLOCATED_PORTS="$NEXT_PORT"
+            else
+              ALLOCATED_PORTS="$ALLOCATED_PORTS,$NEXT_PORT"
+            fi
+            NEXT_PORT=$((NEXT_PORT + 1))
+          done
+          echo "✅ Allocated ports: $ALLOCATED_PORTS"
+
+          # ── Create a Docker network for this session ──
+          NET_NAME="lab-net-${SESSION_ID}"
+          NET_CMD="docker network create ${NET_NAME} 2>/dev/null || true"
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters "{\"commands\":[\"${NET_CMD}\"]}" \
+            --query 'Command.CommandId' --output text)
+          sleep 3
+          echo "✅ Created Docker network: $NET_NAME"
+
+          # ── Start each node container ─────────────────
+          PORT_MAP=""  # JSON object: {"master": 7681, "worker": 7682}
+          MASTER_CONTAINER=""
+
+          for i in $(seq 0 $((NODE_COUNT - 1))); do
+            NODE_ID=$(echo "$MULTI_CONFIG" | jq -r ".nodes[$i].id")
+            NODE_IMAGE=$(echo "$MULTI_CONFIG" | jq -r ".nodes[$i].dockerImage")
+            NODE_FLAGS=$(echo "$MULTI_CONFIG" | jq -r ".nodes[$i].dockerRunFlags // \"\"")
+            PORT=$(echo "$ALLOCATED_PORTS" | cut -d',' -f$((i + 1)))
+
+            CONTAINER_NAME="lab-${SESSION_ID}-${NODE_ID}"
+
+            echo "🚀 Starting node: $NODE_ID (image: $NODE_IMAGE, port: $PORT)"
+
+            # Build the docker run command
+            # For master: use the shared token and expose API port
+            # For worker: connect to master via Docker network
+            EXTRA_ENV="-e SESSION_ID=${SESSION_ID} -e LAB_ID=${LAB_ID} -e TTL_MINUTES=${TTL} -e K3S_TOKEN=devopsduoo-${SESSION_ID}"
+
+            if [ "$NODE_ID" = "master" ]; then
+              EXTRA_ENV="$EXTRA_ENV -e MASTER_IP=${CONTAINER_NAME}"
+              MASTER_CONTAINER="$CONTAINER_NAME"
+            elif [ -n "$MASTER_CONTAINER" ]; then
+              EXTRA_ENV="$EXTRA_ENV -e K3S_URL=https://${MASTER_CONTAINER}:6443"
+            fi
+
+            RUN_CMD="docker run -d --name ${CONTAINER_NAME} --network ${NET_NAME} --hostname ${NODE_ID} -p ${PORT}:7681 ${EXTRA_ENV} --cpus=0.5 --restart=no ${NODE_FLAGS} ${NODE_IMAGE} && echo Node ${NODE_ID} started on port ${PORT}"
+
+            COMMAND_ID=$(aws ssm send-command \
+              --instance-ids "$INSTANCE_ID" \
+              --document-name "AWS-RunShellScript" \
+              --parameters "{\"commands\":[\"${RUN_CMD}\"]}" \
+              --query 'Command.CommandId' --output text)
+
+            echo "⏳ Waiting for $NODE_ID to start..."
+            sleep 10
+
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query 'Status' \
+              --output text 2>/dev/null || echo "Pending")
+
+            if [ "$STATUS" = "Failed" ]; then
+              echo "❌ Failed to start $NODE_ID!"
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "$INSTANCE_ID" \
+                --query 'StandardErrorContent' \
+                --output text 2>/dev/null || true
+              exit 1
+            fi
+
+            echo "✅ $NODE_ID started on port $PORT"
+
+            # Build port map JSON
+            if [ -z "$PORT_MAP" ]; then
+              PORT_MAP="{\"${NODE_ID}\": ${PORT}"
+            else
+              PORT_MAP="${PORT_MAP}, \"${NODE_ID}\": ${PORT}"
+            fi
+          done
+
+          PORT_MAP="${PORT_MAP}}"
+          echo "port_map=$PORT_MAP" >> $GITHUB_OUTPUT
+          echo "network=$NET_NAME" >> $GITHUB_OUTPUT
+          echo "✅ All nodes started. Port map: $PORT_MAP"
+
       # ─── Register session in Nginx reverse proxy ────
-      - name: Register Session in Nginx
+      - name: Register Session in Nginx (Single Node)
         id: register
+        if: inputs.multi_node_config == ''
         run: |
           INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
           SESSION_ID="${{ inputs.session_id }}"
@@ -546,6 +582,51 @@ jobs:
           echo "terminal_url=$TERMINAL_URL" >> $GITHUB_OUTPUT
           echo "✅ Terminal URL: $TERMINAL_URL"
 
+      # ─── Register multi-node sessions in Nginx ──────
+      - name: Register Multi-Node Sessions in Nginx
+        id: register_multi
+        if: inputs.multi_node_config != ''
+        run: |
+          INSTANCE_ID="${{ steps.server.outputs.instance_id }}"
+          SESSION_ID="${{ inputs.session_id }}"
+          PORT_MAP='${{ steps.start_multi.outputs.port_map }}'
+          MULTI_CONFIG='${{ inputs.multi_node_config }}'
+
+          echo "🔧 Registering multi-node Nginx routes..."
+          echo "Port map: $PORT_MAP"
+
+          NODE_COUNT=$(echo "$MULTI_CONFIG" | jq '.nodes | length')
+          TERMINAL_URLS=""
+
+          for i in $(seq 0 $((NODE_COUNT - 1))); do
+            NODE_ID=$(echo "$MULTI_CONFIG" | jq -r ".nodes[$i].id")
+            PORT=$(echo "$PORT_MAP" | jq -r ".\"${NODE_ID}\"")
+
+            # Register each node as a sub-session: session_id-node_id → port
+            SUB_SESSION="${SESSION_ID}-${NODE_ID}"
+            CMD="lab-add-session ${SUB_SESSION} ${PORT}"
+
+            COMMAND_ID=$(aws ssm send-command \
+              --instance-ids "$INSTANCE_ID" \
+              --document-name "AWS-RunShellScript" \
+              --parameters "{\"commands\":[\"$CMD\"]}" \
+              --query 'Command.CommandId' --output text)
+            sleep 3
+
+            TERMINAL_URL="https://${{ env.LAB_DOMAIN }}/s/${SUB_SESSION}/"
+            echo "✅ $NODE_ID terminal: $TERMINAL_URL"
+
+            if [ -z "$TERMINAL_URLS" ]; then
+              TERMINAL_URLS="{\"${NODE_ID}\": \"${TERMINAL_URL}\""
+            else
+              TERMINAL_URLS="${TERMINAL_URLS}, \"${NODE_ID}\": \"${TERMINAL_URL}\""
+            fi
+          done
+
+          TERMINAL_URLS="${TERMINAL_URLS}}"
+          echo "terminal_urls=$TERMINAL_URLS" >> $GITHUB_OUTPUT
+          echo "✅ All terminal URLs registered: $TERMINAL_URLS"
+
       # ─── Output Session Info ───────────────────────────
       - name: Output Session Info
         run: |
@@ -554,11 +635,17 @@ jobs:
           echo "═══════════════════════════════════════════"
           echo "  Session ID:   ${{ inputs.session_id }}"
           echo "  Lab:          ${{ inputs.lab_id }}"
-          echo "  Terminal:     ${{ steps.register.outputs.terminal_url }}"
+
+          if [ -z '${{ inputs.multi_node_config }}' ]; then
+            echo "  Terminal:     ${{ steps.register.outputs.terminal_url }}"
+          else
+            echo "  Multi-node:   Yes"
+            echo "  Terminal URLs: ${{ steps.register_multi.outputs.terminal_urls }}"
+          fi
+
           if [ "${{ inputs.has_web_preview }}" = "true" ]; then
             echo "  Preview URL:  https://${{ env.LAB_DOMAIN }}/s/${{ inputs.session_id }}/preview/"
           fi
-          echo "  Port:         ${{ steps.start.outputs.port }}"
           echo "  TTL:          ${{ inputs.ttl_minutes }} minutes"
           echo "  Server:       ${{ steps.server.outputs.instance_id }}"
           echo "  Cost:         💚 FREE (t2.micro Free Tier)"

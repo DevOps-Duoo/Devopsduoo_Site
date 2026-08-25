@@ -56,14 +56,16 @@ export async function GET(request: NextRequest) {
 
     const instanceId = instance.InstanceId;
     const publicIp = instance.PublicIpAddress;
+    const labDomain = process.env.LAB_DOMAIN || 'lab.devopsduoo.in';
 
-    // 2. Query SSM to see if the container is running and what port it is on
+    // 2. Query SSM to see if the container(s) are running
+    // Check both single-node (lab-{sessionId}) and multi-node (lab-{sessionId}-*) patterns
     const ssm = new SSMClient(awsConfig);
     const ssmCmd = new SendCommandCommand({
       InstanceIds: [instanceId],
       DocumentName: 'AWS-RunShellScript',
       Parameters: {
-        commands: [`docker ps --filter "name=lab-${sessionId}" --format "{{.Ports}}"`]
+        commands: [`docker ps --filter "name=lab-${sessionId}" --format "{{.Names}} {{.Ports}}"`]
       }
     });
 
@@ -86,39 +88,7 @@ export async function GET(request: NextRequest) {
     const invocationRes = await ssm.send(invocationCmd);
     const output = (invocationRes.StandardOutputContent || '').trim();
 
-    // Parse docker output (e.g., "0.0.0.0:7681->7681/tcp")
-    const portMatch = output.match(/:(\d+)->/);
-
-    if (invocationRes.Status === 'Success' && portMatch && portMatch[1]) {
-      const labDomain = process.env.LAB_DOMAIN || 'lab.devopsduoo.in';
-      
-      // Use HTTPS via Nginx reverse proxy with session-based routing
-      const terminalUrl = `https://${labDomain}/s/${sessionId}/`;
-      
-      // Verify Nginx has actually reloaded and mapped the route
-      try {
-        const checkRes = await fetch(terminalUrl, { method: 'HEAD' });
-        if (!checkRes.ok && checkRes.status === 404) {
-          // Nginx hasn't reloaded the lab-ports.map yet
-          return NextResponse.json({
-            sessionId,
-            status: 'provisioning',
-            message: 'Waiting for reverse proxy mapping...'
-          });
-        }
-      } catch (err) {
-        // Ignore network errors here, just wait
-      }
-      
-      return NextResponse.json({
-        sessionId,
-        status: 'ready',
-        terminalUrl,
-        message: 'Lab is ready!',
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-      });
-    } else {
-      // Container not found or still building
+    if (invocationRes.Status !== 'Success' || !output) {
       return NextResponse.json({
         sessionId,
         status: 'provisioning',
@@ -126,9 +96,87 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Parse container output lines
+    // Single-node:  "lab-session123 0.0.0.0:7681->7681/tcp"
+    // Multi-node:   "lab-session123-master 0.0.0.0:7681->7681/tcp"
+    //               "lab-session123-worker 0.0.0.0:7682->7681/tcp"
+    const lines = output.split('\n').filter(l => l.trim());
+    
+    // Check if this is a multi-node lab (containers named lab-{sessionId}-{nodeId})
+    const multiNodePattern = new RegExp(`^lab-${sessionId}-(\\w+)\\s`);
+    const isMultiNode = lines.some(l => multiNodePattern.test(l));
+
+    if (isMultiNode) {
+      // Multi-node: build terminalUrls map
+      const terminalUrls: Record<string, string> = {};
+      
+      for (const line of lines) {
+        const nodeMatch = line.match(multiNodePattern);
+        if (nodeMatch) {
+          const nodeId = nodeMatch[1];
+          const subSessionId = `${sessionId}-${nodeId}`;
+          terminalUrls[nodeId] = `https://${labDomain}/s/${subSessionId}/`;
+        }
+      }
+
+      if (Object.keys(terminalUrls).length === 0) {
+        return NextResponse.json({
+          sessionId,
+          status: 'provisioning',
+          message: 'Multi-node containers starting...'
+        });
+      }
+
+      // Use the first node's URL as the primary terminalUrl
+      const primaryUrl = terminalUrls['master'] || Object.values(terminalUrls)[0];
+
+      return NextResponse.json({
+        sessionId,
+        status: 'ready',
+        terminalUrl: primaryUrl,
+        terminalUrls,
+        message: 'Lab is ready!',
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      });
+    } else {
+      // Single-node: original logic
+      const portMatch = output.match(/:(\d+)->/);
+
+      if (portMatch && portMatch[1]) {
+        const terminalUrl = `https://${labDomain}/s/${sessionId}/`;
+        
+        // Verify Nginx has actually reloaded and mapped the route
+        try {
+          const checkRes = await fetch(terminalUrl, { method: 'HEAD' });
+          if (!checkRes.ok && checkRes.status === 404) {
+            return NextResponse.json({
+              sessionId,
+              status: 'provisioning',
+              message: 'Waiting for reverse proxy mapping...'
+            });
+          }
+        } catch (err) {
+          // Ignore network errors here, just wait
+        }
+        
+        return NextResponse.json({
+          sessionId,
+          status: 'ready',
+          terminalUrl,
+          message: 'Lab is ready!',
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        });
+      } else {
+        return NextResponse.json({
+          sessionId,
+          status: 'provisioning',
+          message: 'Container is building or starting...'
+        });
+      }
+    }
+
   } catch (error) {
     console.error('Error checking lab status:', error);
-    // If we error out checking AWS, just return provisioning so it keeps trying
     return NextResponse.json({
       sessionId,
       status: 'provisioning',

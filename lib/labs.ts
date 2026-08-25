@@ -17,6 +17,13 @@ export interface LabStep {
   validation?: string;
 }
 
+export interface LabNodeConfig {
+  id: string;             // e.g. 'master', 'worker'
+  label: string;          // Tab label: "Master Node", "Worker Node"
+  dockerImage: string;    // Image for this node
+  dockerRunFlags?: string; // Node-specific flags
+}
+
 export interface Lab {
   id: string;
   title: string;
@@ -32,6 +39,10 @@ export interface Lab {
   dockerImage: string;
   dockerRunFlags?: string;
   hasWebPreview?: boolean;
+  multiNode?: {           // Multi-node lab config (e.g. K3s master + worker)
+    enabled: boolean;
+    nodes: LabNodeConfig[];
+  };
   ecsTaskFamily: string;
   status: LabStatus;
   popularityScore: number;
@@ -44,6 +55,7 @@ export interface LabSession {
   startedAt?: string;
   expiresAt?: string;
   terminalUrl?: string;
+  terminalUrls?: Record<string, string>; // Multi-node: { 'master': url, 'worker': url }
   errorMessage?: string;
 }
 
@@ -223,57 +235,75 @@ This is the same technique used by CI/CD pipelines (Jenkins, GitLab CI, GitHub A
   {
     id: 'kubernetes-basics',
     title: 'Kubernetes Essentials',
-    shortDescription: 'Deploy and manage applications on Kubernetes. Learn pods, services, deployments, and scaling with Minikube.',
-    fullDescription: `Dive into Kubernetes — the industry-standard container orchestration platform. Using a local Minikube cluster, you'll learn to deploy applications, manage pods and services, scale workloads, and perform rolling updates.
+    shortDescription: 'Deploy and manage apps on a lightweight K3s cluster. Learn pods, services, deployments, and scaling.',
+    fullDescription: `Get hands-on with Kubernetes using K3s — the lightweight, production-grade Kubernetes distribution by Rancher. This lab gives you a single-node Kubernetes cluster that runs comfortably on a lightweight instance.
 
-This lab provides the foundational skills needed to manage production Kubernetes clusters.`,
+You'll deploy applications, create services, scale workloads, and perform rolling updates. This is the closest experience to managing a production Kubernetes environment, packed into a single terminal.`,
     difficulty: 'intermediate',
     estimatedMinutes: 30,
-    tools: ['Kubernetes', 'Minikube', 'kubectl'],
+    tools: ['Kubernetes', 'K3s', 'kubectl', 'Helm'],
     category: 'orchestration',
     prerequisites: ['Docker Fundamentals lab or equivalent experience', 'Basic YAML knowledge'],
     learningObjectives: [
-      'Understand Kubernetes architecture (pods, nodes, clusters)',
-      'Deploy applications using kubectl',
-      'Create and manage Services for networking',
-      'Scale applications with Deployments',
-      'Perform rolling updates and rollbacks',
+      'Understand Kubernetes architecture (pods, nodes)',
+      'Explore a single-node K3s cluster',
+      'Deploy applications using kubectl and YAML manifests',
+      'Create and manage Services (ClusterIP, NodePort)',
+      'Scale Deployments and perform rolling updates',
+      'Inspect logs, events, and cluster health',
     ],
     steps: [
       {
-        title: 'Start Minikube Cluster',
-        description: 'Initialize a local Kubernetes cluster using Minikube.',
-        command: 'minikube start --driver=docker',
-        hint: 'This will take 1-2 minutes to start',
+        title: 'Verify the Cluster',
+        description: 'Verify that your K3s node is ready and the cluster is healthy.',
+        command: 'kubectl get nodes -o wide && kubectl cluster-info',
+        hint: 'You should see a single node (k3s-master) with STATUS: Ready.',
       },
       {
-        title: 'Explore the Cluster',
-        description: 'Verify the cluster is running and explore its components.',
-        command: 'kubectl cluster-info && kubectl get nodes',
+        title: 'Explore Cluster Components',
+        description: 'Inspect the system pods running on the cluster — these are the core Kubernetes components.',
+        command: 'kubectl get pods -n kube-system -o wide',
+        hint: 'Notice system pods like coredns and metrics-server.',
       },
       {
-        title: 'Deploy an Application',
-        description: 'Create a deployment for an Nginx web server.',
-        command: 'kubectl create deployment nginx-app --image=nginx:alpine --replicas=3',
+        title: 'Deploy Nginx Application',
+        description: 'Create a Deployment with 3 replicas of Nginx.',
+        command: 'kubectl create deployment nginx-app --image=nginx:alpine --replicas=3 && sleep 3 && kubectl get pods -o wide',
+        hint: 'You should see 3 Nginx pods running.',
       },
       {
         title: 'Expose with a Service',
-        description: 'Create a Service to expose your application.',
-        command: 'kubectl expose deployment nginx-app --type=NodePort --port=80',
+        description: 'Create a NodePort Service to make Nginx accessible on the node.',
+        command: 'kubectl expose deployment nginx-app --type=NodePort --port=80 && kubectl get svc nginx-app',
+        hint: 'A NodePort Service allocates a port (30000-32767) on the node.',
       },
       {
-        title: 'Scale the Application',
-        description: 'Scale your deployment up and down.',
-        command: 'kubectl scale deployment nginx-app --replicas=5 && kubectl get pods -w',
-        hint: 'Watch as new pods are created in real-time',
+        title: 'Scale the Deployment',
+        description: 'Scale up to 6 replicas.',
+        command: 'kubectl scale deployment nginx-app --replicas=6 && sleep 3 && kubectl get pods -o wide',
+        hint: 'Kubernetes will start 3 more Nginx pods.',
       },
       {
         title: 'Rolling Update',
-        description: 'Perform a rolling update to a new version.',
+        description: 'Update the Nginx image and watch the rolling update happen without downtime.',
         command: 'kubectl set image deployment/nginx-app nginx=nginx:latest && kubectl rollout status deployment/nginx-app',
+        hint: 'Kubernetes replaces pods one by one to ensure zero downtime.',
+      },
+      {
+        title: 'Inspect Pod Logs & Events',
+        description: 'View logs from a running pod and check cluster events.',
+        command: 'kubectl logs -l app=nginx-app --tail=5 && echo "\\n--- Cluster Events ---" && kubectl get events --sort-by=.metadata.creationTimestamp | tail -10',
+        hint: 'Use "kubectl logs" for app output and "kubectl get events" for cluster-level activity.',
+      },
+      {
+        title: 'Cleanup',
+        description: 'Delete all resources created during this lab.',
+        command: 'kubectl delete deployment nginx-app && kubectl delete svc nginx-app && echo "✅ Cleanup complete!"',
+        hint: 'Always clean up resources when done to free cluster capacity.',
       },
     ],
-    dockerImage: 'devopsduoo/lab-kubernetes:latest',
+    dockerImage: 'devopsduoo/lab-kubernetes-basics:latest',
+    dockerRunFlags: '--privileged --memory=768m --tmpfs /run --tmpfs /var/run',
     ecsTaskFamily: 'lab-kubernetes-basics',
     status: 'coming-soon',
     popularityScore: 90,

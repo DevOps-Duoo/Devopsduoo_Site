@@ -1,0 +1,181 @@
+name: Build & Push Lab Docker Images
+
+# ─────────────────────────────────────────────────────────
+# Builds and pushes lab Docker images to Docker Hub.
+# Supports both single-Dockerfile labs and multi-node labs
+# with Dockerfile.master / Dockerfile.worker naming.
+# ─────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+    inputs:
+      lab_id:
+        description: 'Lab ID to build images for (e.g. kubernetes-basics, docker-inside-container)'
+        required: true
+        type: choice
+        options:
+          - kubernetes-basics
+          - docker-inside-container
+          - redhat-basic-linux
+          - all
+      push:
+        description: 'Push images to Docker Hub after building?'
+        required: true
+        type: boolean
+        default: true
+
+  # Auto-build when Dockerfiles change on main
+  push:
+    branches: [main]
+    paths:
+      - 'docker/**/Dockerfile*'
+      - 'docker/**/entrypoint*.sh'
+
+env:
+  DOCKER_HUB_ORG: devopsduoo
+
+jobs:
+  # ─── Detect which labs need building ─────────────────
+  detect:
+    name: Detect Changed Labs
+    runs-on: ubuntu-latest
+    outputs:
+      labs: ${{ steps.set-labs.outputs.labs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine labs to build
+        id: set-labs
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.lab_id }}" = "all" ]; then
+              # Build all labs that have Dockerfiles
+              LABS=$(ls -d docker/*/Dockerfile* 2>/dev/null | xargs -I{} dirname {} | sort -u | xargs -I{} basename {} | jq -R . | jq -s .)
+            else
+              LABS="[\"${{ inputs.lab_id }}\"]"
+            fi
+          else
+            # Auto-detect changed labs from git diff
+            CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD -- 'docker/' | xargs -I{} dirname {} | sort -u | sed 's|docker/||' | jq -R . | jq -s .)
+            LABS="$CHANGED_DIRS"
+          fi
+
+          echo "labs=$LABS" >> $GITHUB_OUTPUT
+          echo "🔍 Labs to build: $LABS"
+
+  # ─── Build & Push Images ─────────────────────────────
+  build:
+    name: Build ${{ matrix.lab }}
+    needs: detect
+    if: needs.detect.outputs.labs != '[]' && needs.detect.outputs.labs != 'null'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        lab: ${{ fromJson(needs.detect.outputs.labs) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Detect Dockerfiles
+        id: detect-files
+        run: |
+          LAB_DIR="docker/${{ matrix.lab }}"
+
+          if [ ! -d "$LAB_DIR" ]; then
+            echo "❌ No docker directory found for ${{ matrix.lab }}"
+            exit 1
+          fi
+
+          # Check for multi-node Dockerfiles (Dockerfile.master, Dockerfile.worker, etc.)
+          MULTI_FILES=$(ls "$LAB_DIR"/Dockerfile.* 2>/dev/null || true)
+
+          if [ -n "$MULTI_FILES" ]; then
+            echo "mode=multi" >> $GITHUB_OUTPUT
+            # Extract node names: Dockerfile.master -> master, Dockerfile.worker -> worker
+            NODES=$(echo "$MULTI_FILES" | xargs -I{} basename {} | sed 's/Dockerfile\.//' | jq -R . | jq -s .)
+            echo "nodes=$NODES" >> $GITHUB_OUTPUT
+            echo "📦 Multi-node lab detected. Nodes: $NODES"
+          elif [ -f "$LAB_DIR/Dockerfile" ]; then
+            echo "mode=single" >> $GITHUB_OUTPUT
+            echo "📦 Single Dockerfile detected."
+          else
+            echo "❌ No Dockerfile found in $LAB_DIR"
+            exit 1
+          fi
+
+      # ─── Single Dockerfile build ────────────────────
+      - name: Build & Push (Single Image)
+        if: steps.detect-files.outputs.mode == 'single'
+        uses: docker/build-push-action@v5
+        with:
+          context: docker/${{ matrix.lab }}
+          file: docker/${{ matrix.lab }}/Dockerfile
+          push: ${{ github.event_name == 'push' || inputs.push }}
+          tags: |
+            ${{ env.DOCKER_HUB_ORG }}/lab-${{ matrix.lab }}:latest
+            ${{ env.DOCKER_HUB_ORG }}/lab-${{ matrix.lab }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ─── Multi-node Dockerfile builds ───────────────
+      - name: Build & Push (Multi-Node Images)
+        if: steps.detect-files.outputs.mode == 'multi'
+        run: |
+          LAB_DIR="docker/${{ matrix.lab }}"
+          NODES='${{ steps.detect-files.outputs.nodes }}'
+          PUSH="${{ github.event_name == 'push' || inputs.push }}"
+
+          echo "$NODES" | jq -r '.[]' | while read NODE; do
+            IMAGE="${{ env.DOCKER_HUB_ORG }}/lab-k3s-${NODE}"
+            DOCKERFILE="${LAB_DIR}/Dockerfile.${NODE}"
+
+            echo ""
+            echo "═══════════════════════════════════════════"
+            echo "  🔨 Building: ${IMAGE}:latest"
+            echo "  📄 Dockerfile: ${DOCKERFILE}"
+            echo "═══════════════════════════════════════════"
+
+            docker buildx build \
+              --file "$DOCKERFILE" \
+              --tag "${IMAGE}:latest" \
+              --tag "${IMAGE}:${{ github.sha }}" \
+              --cache-from "type=gha,scope=${IMAGE}" \
+              --cache-to "type=gha,scope=${IMAGE},mode=max" \
+              $([ "$PUSH" = "true" ] && echo "--push" || echo "--load") \
+              "$LAB_DIR"
+
+            echo "✅ ${IMAGE}:latest built successfully"
+          done
+
+      # ─── Summary ────────────────────────────────────
+      - name: Build Summary
+        run: |
+          echo "## 🐳 Docker Image Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Lab**: \`${{ matrix.lab }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode**: \`${{ steps.detect-files.outputs.mode }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.detect-files.outputs.mode }}" = "multi" ]; then
+            echo "### Images Built" >> $GITHUB_STEP_SUMMARY
+            echo '${{ steps.detect-files.outputs.nodes }}' | jq -r '.[]' | while read NODE; do
+              echo "- \`${{ env.DOCKER_HUB_ORG }}/lab-k3s-${NODE}:latest\`" >> $GITHUB_STEP_SUMMARY
+            done
+          else
+            echo "### Image Built" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ env.DOCKER_HUB_ORG }}/lab-${{ matrix.lab }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          fi

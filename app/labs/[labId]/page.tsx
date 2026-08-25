@@ -186,6 +186,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   const [activeStep, setActiveStep] = useState(0);
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('queued');
   const [terminalUrl, setTerminalUrl] = useState<string | undefined>();
+  const [terminalUrls, setTerminalUrls] = useState<Record<string, string> | undefined>();
   const [expiresAt, setExpiresAt] = useState<string | undefined>();
   const [showInstructions, setShowInstructions] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
@@ -194,6 +195,8 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
   const [userName, setUserName] = useState('');
   const [activeTab, setActiveTab] = useState<'terminal' | 'preview'>('terminal');
   const [previewKey, setPreviewKey] = useState(0);
+
+  const isMultiNode = lab?.multiNode?.enabled ?? false;
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -242,6 +245,9 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
 
           if (data.status === 'ready' || data.status === 'active') {
             setTerminalUrl(data.terminalUrl);
+            if (data.terminalUrls) {
+              setTerminalUrls(data.terminalUrls);
+            }
             setExpiresAt(data.expiresAt);
             setIsStarting(false);
             clearInterval(interval);
@@ -296,6 +302,7 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
     setTimeout(() => {
       setSessionStatus('terminated');
       setTerminalUrl(undefined);
+      setTerminalUrls(undefined);
       setExpiresAt(undefined);
       setSessionId(null);
     }, 2000);
@@ -694,13 +701,45 @@ export default function LabDetailPage({ params }: { params: { labId: string } })
                   </div>
                 )}
 
-                {/* Active terminal */}
-                {(isActive || isProvisioning) && activeTab === 'terminal' && (
+                {/* Active terminal — single node */}
+                {(isActive || isProvisioning) && activeTab === 'terminal' && !isMultiNode && (
                   <LabTerminal
                     terminalUrl={terminalUrl}
                     isConnected={isActive}
                     sessionStatus={sessionStatus}
                   />
+                )}
+
+                {/* Active terminals — multi-node (e.g. K3s master + worker) */}
+                {(isActive || isProvisioning) && activeTab === 'terminal' && isMultiNode && lab?.multiNode && (
+                  <div className="absolute inset-0 flex flex-col">
+                    {lab.multiNode.nodes.map((node, idx) => (
+                      <div key={node.id} className="flex-1 flex flex-col min-h-0" style={{ flexBasis: `${100 / lab.multiNode!.nodes.length}%` }}>
+                        {/* Node header tab */}
+                        <div className="flex-none flex items-center gap-2 px-4 py-1.5 bg-gray-900/80 border-b border-gray-700/50">
+                          <span className="text-xs font-bold text-cyan-400">{node.label}</span>
+                          {isActive && (
+                            <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              Connected
+                            </span>
+                          )}
+                        </div>
+                        {/* Terminal instance */}
+                        <div className="flex-1 min-h-0 relative">
+                          <LabTerminal
+                            terminalUrl={terminalUrls?.[node.id]}
+                            isConnected={isActive}
+                            sessionStatus={sessionStatus}
+                          />
+                        </div>
+                        {/* Divider between nodes (except last) */}
+                        {idx < lab.multiNode!.nodes.length - 1 && (
+                          <div className="flex-none h-1 bg-gray-700/50 hover:bg-primary-500/50 transition-colors cursor-row-resize" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
 
                 {/* Web Preview Iframe */}

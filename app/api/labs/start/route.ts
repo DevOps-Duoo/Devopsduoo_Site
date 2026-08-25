@@ -118,6 +118,9 @@ export async function POST(request: NextRequest) {
                 has_web_preview: lab.hasWebPreview ? 'true' : 'false',
                 ttl_minutes: '30',
                 user_name: userName || 'Anonymous',
+                multi_node_config: lab.multiNode?.enabled
+                  ? JSON.stringify(lab.multiNode)
+                  : '',
               },
             }),
           }
