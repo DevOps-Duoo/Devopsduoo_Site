@@ -53,13 +53,13 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.lab_id }}" = "all" ]; then
               # Build all labs that have Dockerfiles
-              LABS=$(ls -d docker/*/Dockerfile* 2>/dev/null | xargs -I{} dirname {} | sort -u | xargs -I{} basename {} | jq -R . | jq -s .)
+              LABS=$(ls -d docker/*/Dockerfile* 2>/dev/null | xargs -I{} dirname {} | sort -u | xargs -I{} basename {} | jq -R . | jq -s -c .)
             else
               LABS="[\"${{ inputs.lab_id }}\"]"
             fi
           else
             # Auto-detect changed labs from git diff
-            CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD -- 'docker/' | xargs -I{} dirname {} | sort -u | sed 's|docker/||' | jq -R . | jq -s .)
+            CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD -- 'docker/' | xargs -I{} dirname {} | sort -u | sed 's|docker/||' | jq -R . | jq -s -c .)
             LABS="$CHANGED_DIRS"
           fi
 
