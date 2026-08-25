@@ -151,7 +151,7 @@ This lab is perfect for anyone starting their DevOps journey. A solid Linux foun
   },
   {
     id: 'docker-inside-container',
-    title: 'Docker Inside Container',
+    title: 'Docker Fundamentals',
     shortDescription: 'Learn Docker-in-Docker (DinD) — run and manage Docker containers from within a container. Master images, networking, volumes, and Compose in an isolated environment.',
     fullDescription: `Experience Docker-in-Docker (DinD) — one of the most powerful patterns in modern DevOps. In this hands-on lab, you'll run Docker inside a container, build images, manage networks, attach volumes, and orchestrate multi-container applications — all from within an isolated Docker environment.
 
@@ -218,65 +218,6 @@ This is the same technique used by CI/CD pipelines (Jenkins, GitLab CI, GitHub A
     hasWebPreview: true,
     ecsTaskFamily: 'lab-docker-inside-container',
     status: 'available',
-    popularityScore: 95,
-  },
-  {
-    id: 'docker-fundamentals',
-    title: 'Docker Fundamentals',
-    shortDescription: 'Learn to build, run, and manage Docker containers from scratch. Master images, volumes, networks, and Docker Compose.',
-    fullDescription: `Master the fundamentals of containerization with Docker. In this hands-on lab, you'll learn to create Docker images, run containers, manage volumes and networks, and orchestrate multi-container applications with Docker Compose.
-
-By the end of this lab, you'll be comfortable containerizing any application and understand the core concepts that power modern cloud-native deployments.`,
-    difficulty: 'beginner',
-    estimatedMinutes: 25,
-    tools: ['Docker', 'Docker Compose'],
-    category: 'containers',
-    prerequisites: ['Basic Linux command line knowledge'],
-    learningObjectives: [
-      'Understand Docker images and containers',
-      'Build custom Docker images with Dockerfiles',
-      'Manage container lifecycle (start, stop, remove)',
-      'Use volumes for persistent data',
-      'Create multi-container apps with Docker Compose',
-    ],
-    steps: [
-      {
-        title: 'Verify Docker Installation',
-        description: 'Let\'s start by verifying Docker is installed and running correctly.',
-        command: 'docker --version && docker info',
-        hint: 'Docker should show version 24.x or higher',
-      },
-      {
-        title: 'Run Your First Container',
-        description: 'Pull and run the official Nginx web server container.',
-        command: 'docker run -d --name my-nginx -p 8080:80 nginx:alpine',
-        hint: 'The -d flag runs the container in detached mode',
-      },
-      {
-        title: 'Inspect Running Containers',
-        description: 'List all running containers and inspect the Nginx container.',
-        command: 'docker ps && docker inspect my-nginx',
-      },
-      {
-        title: 'Build a Custom Image',
-        description: 'Create a Dockerfile and build your own image.',
-        command: 'echo "FROM nginx:alpine\\nCOPY index.html /usr/share/nginx/html/" > Dockerfile && echo "<h1>Hello DevOps Duoo!</h1>" > index.html && docker build -t my-app .',
-        hint: 'The Dockerfile defines the blueprint for your image',
-      },
-      {
-        title: 'Docker Compose',
-        description: 'Create a multi-container application with Docker Compose.',
-        command: 'cat > docker-compose.yml << EOF\nversion: "3.8"\nservices:\n  web:\n    image: nginx:alpine\n    ports:\n      - "8080:80"\n  redis:\n    image: redis:alpine\nEOF\ndocker compose up -d',
-      },
-      {
-        title: 'Cleanup',
-        description: 'Stop and remove all containers and images created during this lab.',
-        command: 'docker compose down && docker rm -f my-nginx && docker rmi my-app',
-      },
-    ],
-    dockerImage: 'devopsduoo/lab-docker:latest',
-    ecsTaskFamily: 'lab-docker-fundamentals',
-    status: 'coming-soon',
     popularityScore: 95,
   },
   {
