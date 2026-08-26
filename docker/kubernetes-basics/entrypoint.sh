@@ -103,6 +103,5 @@ exec ttyd \
     --writable \
     --port 7681 \
     --ping-interval 30 \
-    --max-clients 1 \
     --client-option titleFixed="DevOps Duoo - K3s Master" \
     su - labuser

@@ -4,23 +4,13 @@
 # Base: rancher/k3s (Alpine-based)
 # ─────────────────────────────────────────────────────────
 
-# ── Stage 1: Get k3s binary ──────────────────────────────
-FROM rancher/k3s:v1.31.4-k3s1 AS k3s-bin
-
-# ── Stage 2: Final lab image ─────────────────────────────
-FROM alpine:3.19
+FROM rancher/k3s:v1.31.4-k3s1
 
 LABEL maintainer="DevOps Duoo <hello@devopsduoo.com>"
 LABEL description="K3s Master Node lab environment with web terminal"
 
-# Copy k3s binary and set up symlinks
-COPY --from=k3s-bin /bin/k3s /usr/local/bin/k3s
-RUN ln -s /usr/local/bin/k3s /usr/local/bin/kubectl \
-    && ln -s /usr/local/bin/k3s /usr/local/bin/crictl \
-    && ln -s /usr/local/bin/k3s /usr/local/bin/ctr
-
 # ── Install essential tools ───────────────────────────────
-# We use Alpine as the base, so we can use apk
+# rancher/k3s is Alpine-based, so we can use apk
 RUN apk add --no-cache \
     bash \
     coreutils \
@@ -44,11 +34,7 @@ RUN apk add --no-cache \
     jq \
     git \
     tree \
-    openssl \
-    iptables \
-    socat \
-    ipset \
-    ebtables
+    openssl
 
 # ── Install ttyd (web-based terminal) ─────────────────────
 # ttyd exposes a terminal via HTTP on port 7681

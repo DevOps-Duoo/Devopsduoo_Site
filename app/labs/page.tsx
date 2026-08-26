@@ -35,6 +35,7 @@ const toolIcons: Record<string, any> = {
   'Kubernetes': SiKubernetes,
   'Minikube': SiKubernetes,
   'kubectl': SiKubernetes,
+  'K3s': SiKubernetes,
   'Terraform': SiTerraform,
   'HCL': SiTerraform,
   'Ansible': SiAnsible,
