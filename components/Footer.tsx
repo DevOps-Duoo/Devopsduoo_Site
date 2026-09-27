@@ -12,6 +12,7 @@ export default function Footer() {
     company: [
       { name: 'About Us', path: '/about' },
       { name: 'Contact', path: '/contact' },
+      { name: 'Letterhead & Work Plan', path: '/letterhead' },
     ],
     services: [
       { name: 'Cloud Infrastructure', path: '/#services' },

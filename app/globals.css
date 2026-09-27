@@ -200,3 +200,131 @@ body::before {
   margin-top: 2.5rem;
   margin-bottom: 2.5rem;
 }
+
+/* Print Media Optimization */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm 8mm 6mm 8mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 8pt !important;
+  }
+
+  /* Hide navigation, footers, website watermarks, and control buttons */
+  nav,
+  footer,
+  body::before,
+  .no-print,
+  #global-enhancements {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* One-page constraint for print */
+  .letterhead-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    min-height: auto !important;
+  }
+
+  .letterhead-page {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 14px 20px 10px 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Print specific font scaling to fit 1 page */
+  .letterhead-brand-title {
+    font-size: 14pt !important;
+    line-height: 1 !important;
+  }
+
+  .letterhead-brand-sub {
+    font-size: 7.5pt !important;
+    line-height: 1.1 !important;
+  }
+
+  .letterhead-contact {
+    font-size: 7pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .letterhead-ref {
+    font-size: 7pt !important;
+    padding-top: 2px !important;
+  }
+
+  .letterhead-title {
+    font-size: 12.5pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .letterhead-subtitle {
+    font-size: 8pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .letterhead-scope {
+    font-size: 7.5pt !important;
+    line-height: 1.2 !important;
+    padding: 4px 6px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .letterhead-table th,
+  .letterhead-table td {
+    padding-top: 1.5px !important;
+    padding-bottom: 1.5px !important;
+    font-size: 7.2pt !important;
+    line-height: 1.15 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .letterhead-summary {
+    font-size: 7.5pt !important;
+    line-height: 1.2 !important;
+    padding: 3px 6px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .letterhead-terms {
+    font-size: 6.8pt !important;
+    line-height: 1.2 !important;
+    padding: 4px 6px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .letterhead-terms li {
+    margin-bottom: 1.5px !important;
+  }
+
+  .letterhead-footer {
+    font-size: 6.8pt !important;
+    padding-top: 3px !important;
+  }
+
+  tr, td, th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+
